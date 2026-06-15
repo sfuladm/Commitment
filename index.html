@@ -11,7 +11,7 @@
     <!-- Chart.js for data visualization -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=300;400;500;600;700;800&display=swap');
         
         :root {
             --sat: env(safe-area-inset-top, 0px);
@@ -579,27 +579,6 @@
 
     <!-- CORE APPLICATION LOGIC & DATABASE ENGINE -->
     <script>
-        // Baseline Auto-Seeding Datasets (Written to Cloud Firestore on first empty startup)
-        const seedingCommitments = [
-            { category: "Transport", item: "Car Payment", amount: 1162.00 },
-            { category: "Transport", item: "My50 Pass", amount: 50.00 },
-            { category: "Transport", item: "Car Insurance & Maintenance", amount: 1600.00 },
-            { category: "Housing & Bills", item: "House Rent", amount: 500.00 },
-            { category: "Housing & Bills", item: "Utilities", amount: 59.00 },
-            { category: "Housing & Bills", item: "Phone Plan", amount: 208.00 },
-            { category: "Family", item: "Parents Allowance (250 x 2)", amount: 500.00 },
-            { category: "Gadgets", item: "iPad Installment", amount: 162.00 },
-            { category: "Loans & BNPL", item: "TnG Loans (127 + 124 + 31)", amount: 282.00 },
-            { category: "Loans & BNPL", item: "GX Bank Loan", amount: 307.15 },
-            { category: "Loans & BNPL", item: "SPayLater", amount: 195.00 },
-            { category: "Loans & BNPL", item: "Shopee Loan (28.33 x 8 + 45.33)", amount: 271.97 }
-        ];
-
-        const seedingSavings = [
-            { month: "2026-05", note: "Emergency Sinking Fund", amount: 350.00 },
-            { month: "2026-06", note: "Fixed Deposit Reserve", amount: 400.00 }
-        ];
-
         // STRICT FIREBASE CONFIGURATION
         const firebaseConfig = {
             apiKey: "AIzaSyB3HV2fLQDqAZQoAMq_Ava2hjPNAmqJ23s",
@@ -678,8 +657,8 @@
                     badge.innerHTML = `<span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span> Online Synced`;
                 }
 
-                // Begin Realtime Sync Listener & Run Seeder Checks
-                await runFirstTimeDatabaseSeeder(db, user.uid);
+                // Verify base configurations and initialize real-time sync listeners
+                await ensureSalaryInitialized(db, user.uid);
                 bindFirestoreRealtimeListeners(db, user.uid);
 
                 // Clear login screen overlay
@@ -703,48 +682,17 @@
             }
         }
 
-        // Auto-Seeding Logic to populate newly created free databases instantly
-        async function runFirstTimeDatabaseSeeder(db, uid) {
+        // Verification check to initialize default configuration variables in the database
+        async function ensureSalaryInitialized(db, uid) {
             const appId = typeof __app_id !== 'undefined' ? __app_id : 'commitment-tracker-d78a4';
-            
-            // 1. Verify and Seed Base Salary Settings Doc
             const settingsDocRef = window.FirebaseFirestore.doc(db, 'artifacts', appId, 'users', uid, 'settings', 'salary');
             const salarySnap = await window.FirebaseFirestore.getDoc(settingsDocRef);
+            
             if (!salarySnap.exists()) {
                 await window.FirebaseFirestore.setDoc(settingsDocRef, { salary: 6500.00 });
                 appState.salary = 6500.00;
             } else {
                 appState.salary = parseFloat(salarySnap.data().salary) || 6500.00;
-            }
-
-            // 2. Verify and Seed commitments collection
-            const commitmentsRef = window.FirebaseFirestore.collection(db, 'artifacts', appId, 'users', uid, 'commitments');
-            const commQuery = window.FirebaseFirestore.query(commitmentsRef);
-            
-            // Since we can't use complex compound queries, a basic collection fetch is fully compliant
-            const commSnap = await window.FirebaseFirestore.getDoc(window.FirebaseFirestore.doc(db, 'artifacts', appId, 'users', uid));
-            // Let's check if we have documents by trying to read the collection
-            let existingCommCount = 0;
-            
-            // We'll perform a quick read to count existing items. If empty, write default ones.
-            const tempSnapshot = await window.FirebaseFirestore.getDoc(settingsDocRef); // just a probe
-            // We can check if database flag is set, if not, write seeding elements.
-            const userProfileRef = window.FirebaseFirestore.doc(db, 'artifacts', appId, 'users', uid, 'settings', 'profile');
-            const profileSnap = await window.FirebaseFirestore.getDoc(userProfileRef);
-            
-            if (!profileSnap.exists()) {
-                // Database is blank, run the collection seed loops
-                for (const comm of seedingCommitments) {
-                    await window.FirebaseFirestore.addDoc(commitmentsRef, comm);
-                }
-                
-                const savingsRef = window.FirebaseFirestore.collection(db, 'artifacts', appId, 'users', uid, 'savings');
-                for (const sav of seedingSavings) {
-                    await window.FirebaseFirestore.addDoc(savingsRef, sav);
-                }
-
-                await window.FirebaseFirestore.setDoc(userProfileRef, { seeded: true });
-                showNotification("Empty account detected. Default dataset seeded successfully!");
             }
         }
 
@@ -1182,7 +1130,7 @@
                                     <span class="text-[10px] text-slate-500 block leading-none">Saved</span>
                                     <span class="font-mono text-xs font-bold text-emerald-400">RM ${formatCurrency(record.amount)}</span>
                                 </div>
-                                <button onclick="triggerDeleteSavings('${record.id}')" class="text-slate-400 hover:text-rose-400 p-2 bg-slate-900 rounded-xl border border-slate-800" title="Delete Log">
+                                <button onclick="triggerDeleteSavings('${record.id}')" class="text-slate-400 hover:text-rose-450 p-2 bg-slate-900 rounded-xl border border-slate-800" title="Delete Log">
                                     <i class="fa-solid fa-trash-can text-xs"></i>
                                 </button>
                             </div>
@@ -1387,6 +1335,7 @@
             }
         }
 
+        // Anti-injection helper
         function escapeHtml(text) {
             return text
                 .replace(/&/g, "&amp;")
@@ -1396,6 +1345,7 @@
                 .replace(/'/g, "&#039;");
         }
 
+        // UI Toast notifier
         function showNotification(text, type = "success") {
             const bar = document.getElementById("notification-bar");
             const textElem = document.getElementById("notification-text");
