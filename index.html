@@ -4,11 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Commitment & Savings Tracker - Multi-User</title>
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome for Premium Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Chart.js for data visualization -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
@@ -24,7 +21,6 @@
             padding-bottom: var(--sab);
         }
 
-        /* Custom scrollbar styling */
         ::-webkit-scrollbar {
             width: 4px;
             height: 4px;
@@ -37,7 +33,6 @@
             border-radius: 9999px;
         }
 
-        /* Safe area fallback paddings */
         .ios-top-padding {
             padding-top: max(0.75rem, env(safe-area-inset-top));
         }
@@ -51,15 +46,14 @@
 </head>
 <body class="h-full text-slate-100 flex flex-col justify-between select-none">
 
-    <!-- Firebase SDK Imports -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, collection, query, onSnapshot, addDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, addDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
         window.FirebaseCore = { initializeApp };
-        window.FirebaseAuth = { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken };
-        window.FirebaseFirestore = { getFirestore, doc, setDoc, getDoc, collection, query, onSnapshot, addDoc, updateDoc, deleteDoc };
+        window.FirebaseAuth = { getAuth, signInAnonymously, onAuthStateChanged };
+        window.FirebaseFirestore = { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, addDoc, updateDoc, deleteDoc };
     </script>
 
     <!-- Top Navigation Bar -->
@@ -87,7 +81,6 @@
         </div>
     </header>
 
-    <!-- Main Application Container -->
     <main class="flex-grow max-w-7xl w-full mx-auto p-3 sm:p-6 lg:p-8 space-y-4">
 
         <!-- LOGIN/SIGNUP WALL -->
@@ -109,22 +102,12 @@
             <!-- Login Form -->
             <form id="app-login-form" class="space-y-4">
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">User ID / Username</label>
-                    <div class="relative">
-                        <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-500">
-                            <i class="fa-solid fa-user text-sm"></i>
-                        </span>
-                        <input type="text" id="login-userid" placeholder="Enter your ID" class="w-full pl-10 pr-4 py-3 h-12 bg-slate-950 border border-slate-800 rounded-xl focus:outline-none focus:ring-1 focus:ring-emerald-500 text-slate-100 transition placeholder-slate-700" required>
-                    </div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">User ID</label>
+                    <input type="text" id="login-userid" placeholder="Enter your ID" class="w-full px-4 py-3 h-12 bg-slate-950 border border-slate-800 rounded-xl focus:outline-none focus:ring-1 focus:ring-emerald-500 text-slate-100 transition placeholder-slate-700" required>
                 </div>
                 <div>
                     <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Password</label>
-                    <div class="relative">
-                        <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-500">
-                            <i class="fa-solid fa-lock text-sm"></i>
-                        </span>
-                        <input type="password" id="login-password" placeholder="••••••••" class="w-full pl-10 pr-4 py-3 h-12 bg-slate-950 border border-slate-800 rounded-xl focus:outline-none focus:ring-1 focus:ring-emerald-500 text-slate-100 transition placeholder-slate-700">
-                    </div>
+                    <input type="password" id="login-password" placeholder="••••••••" class="w-full px-4 py-3 h-12 bg-slate-950 border border-slate-800 rounded-xl focus:outline-none focus:ring-1 focus:ring-emerald-500 text-slate-100 transition placeholder-slate-700">
                 </div>
                 <button type="submit" class="w-full bg-emerald-500 active:scale-[0.98] hover:bg-emerald-400 text-slate-950 font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-emerald-500/20 transition duration-150 text-sm flex items-center justify-center gap-2">
                     <span>Login</span> <i class="fa-solid fa-arrow-right text-xs"></i>
@@ -135,22 +118,11 @@
             <form id="app-signup-form" class="space-y-4 hidden">
                 <div>
                     <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Create User ID</label>
-                    <div class="relative">
-                        <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-500">
-                            <i class="fa-solid fa-user-plus text-sm"></i>
-                        </span>
-                        <input type="text" id="signup-userid" placeholder="Your unique ID" class="w-full pl-10 pr-4 py-3 h-12 bg-slate-950 border border-slate-800 rounded-xl focus:outline-none focus:ring-1 focus:ring-emerald-500 text-slate-100 transition placeholder-slate-700" required>
-                    </div>
-                    <p class="text-[9px] text-slate-500 mt-1">Letters, numbers, underscores only</p>
+                    <input type="text" id="signup-userid" placeholder="Your unique ID" class="w-full px-4 py-3 h-12 bg-slate-950 border border-slate-800 rounded-xl focus:outline-none focus:ring-1 focus:ring-emerald-500 text-slate-100 transition placeholder-slate-700" required>
                 </div>
                 <div>
                     <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Create Password</label>
-                    <div class="relative">
-                        <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-500">
-                            <i class="fa-solid fa-lock text-sm"></i>
-                        </span>
-                        <input type="password" id="signup-password" placeholder="••••••••" class="w-full pl-10 pr-4 py-3 h-12 bg-slate-950 border border-slate-800 rounded-xl focus:outline-none focus:ring-1 focus:ring-emerald-500 text-slate-100 transition placeholder-slate-700" required>
-                    </div>
+                    <input type="password" id="signup-password" placeholder="••••••••" class="w-full px-4 py-3 h-12 bg-slate-950 border border-slate-800 rounded-xl focus:outline-none focus:ring-1 focus:ring-emerald-500 text-slate-100 transition placeholder-slate-700" required>
                 </div>
                 <button type="submit" class="w-full bg-emerald-500 active:scale-[0.98] hover:bg-emerald-400 text-slate-950 font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-emerald-500/20 transition duration-150 text-sm flex items-center justify-center gap-2">
                     <span>Create Account</span> <i class="fa-solid fa-user-check text-xs"></i>
@@ -161,15 +133,14 @@
         <!-- Authenticated Dashboard Panel -->
         <div id="dashboard-panel" class="hidden space-y-4 ios-bottom-nav-padding lg:pb-0">
 
-            <!-- Real-time Alerts Notification System -->
+            <!-- Notification Bar -->
             <div id="notification-bar" class="hidden flex items-center justify-between p-3.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 rounded-xl text-xs transition-all">
                 <span class="flex items-center gap-2"><i class="fa-solid fa-circle-check"></i> <span id="notification-text">Action succeeded.</span></span>
                 <button onclick="closeNotification()" class="hover:text-white transition p-1"><i class="fa-solid fa-xmark text-sm"></i></button>
             </div>
 
-            <!-- UNIFIED TOP LEVEL STATS -->
+            <!-- TOP LEVEL STATS -->
             <div id="top-level-metrics" class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                <!-- Salary -->
                 <div class="bg-slate-900/60 border border-slate-800/40 rounded-2xl p-4 shadow-sm">
                     <div class="flex items-center justify-between">
                         <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Salary</span>
@@ -179,10 +150,9 @@
                     </div>
                     <div class="mt-1 flex items-baseline gap-0.5">
                         <span class="text-slate-400 text-xs font-semibold">RM</span>
-                        <span id="salary-val-display" class="text-base font-extrabold text-white">...</span>
+                        <span id="salary-val-display" class="text-base font-extrabold text-white">0.00</span>
                     </div>
                 </div>
-                <!-- Outflow -->
                 <div class="bg-slate-900/60 border border-slate-800/40 rounded-2xl p-4 shadow-sm">
                     <div class="flex items-center justify-between">
                         <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Outflow</span>
@@ -193,7 +163,6 @@
                         <span id="commit-val-display" class="text-base font-extrabold text-rose-400">0.00</span>
                     </div>
                 </div>
-                <!-- Savings -->
                 <div class="bg-slate-900/60 border border-slate-800/40 rounded-2xl p-4 shadow-sm">
                     <div class="flex items-center justify-between">
                         <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Saved</span>
@@ -204,7 +173,6 @@
                         <span id="savings-val-display" class="text-base font-extrabold text-emerald-400">0.00</span>
                     </div>
                 </div>
-                <!-- Disposable -->
                 <div class="bg-slate-900/60 border border-slate-800/40 rounded-2xl p-4 shadow-sm">
                     <div class="flex items-center justify-between">
                         <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Disposable</span>
@@ -217,12 +185,9 @@
                 </div>
             </div>
 
-            <!-- RESPONSIVE MOBILE TABS VIEWS -->
+            <!-- MOBILE TABS -->
             <div id="mobile-tabs-content" class="block lg:hidden space-y-4">
-                
-                <!-- MOBILE SCREEN 1: OVERVIEW -->
                 <div id="tab-panel-overview" class="tab-panel space-y-4">
-                    <!-- Doughnut Chart Layout -->
                     <div class="bg-slate-900/60 border border-slate-800/40 rounded-2xl p-5 shadow-xl">
                         <h3 class="text-xs font-bold text-white mb-2 flex items-center gap-2">
                             <i class="fa-solid fa-chart-pie text-emerald-400"></i> Outflow Allocation
@@ -233,243 +198,139 @@
                     </div>
                 </div>
 
-                <!-- MOBILE SCREEN 2: COMMITMENT DIRECTORY -->
                 <div id="tab-panel-directory" class="tab-panel space-y-4 hidden">
                     <div class="bg-slate-900/60 border border-slate-800/40 rounded-2xl shadow-xl overflow-hidden p-4 space-y-4">
                         <div class="flex flex-col gap-2.5">
                             <h3 class="text-sm font-bold text-white flex items-center gap-2">
-                                <i class="fa-solid fa-list-check text-emerald-400"></i> Commitments Directory
+                                <i class="fa-solid fa-list-check text-emerald-400"></i> Commitments
                             </h3>
-                            <div class="flex gap-2">
-                                <div class="relative flex-grow">
-                                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500 text-xs">
-                                        <i class="fa-solid fa-magnifying-glass"></i>
-                                    </span>
-                                    <input type="text" id="search-input-mob" oninput="renderApp()" placeholder="Search items..." class="w-full h-11 pl-8 pr-3 bg-slate-950 border border-slate-800 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500 text-slate-200">
-                                </div>
-                                <select id="filter-category-mob" onchange="renderApp()" class="bg-slate-950 border border-slate-800 rounded-xl text-xs px-2.5 h-11 focus:ring-1 focus:ring-emerald-500 text-slate-300">
-                                    <option value="All">All</option>
-                                    <option value="Transport">Transport</option>
-                                    <option value="Housing & Bills">Housing & Bills</option>
-                                    <option value="Family">Family</option>
-                                    <option value="Gadgets">Gadgets</option>
-                                    <option value="Loans & BNPL">Loans</option>
-                                    <option value="Others">Others</option>
-                                </select>
+                            <div id="commitments-mobile-list" class="space-y-2 max-h-[45vh] overflow-y-auto pr-1">
                             </div>
-                        </div>
-
-                        <!-- Touch Index Cards on Mobile Interface -->
-                        <div id="commitments-mobile-list" class="space-y-2 max-h-[45vh] overflow-y-auto pr-1">
-                            <!-- Mobile items rendered dynamically here -->
                         </div>
                     </div>
                 </div>
 
-                <!-- MOBILE SCREEN 3: SAVINGS VAULT -->
                 <div id="tab-panel-vault" class="tab-panel space-y-4 hidden">
                     <div class="bg-slate-900/60 border border-slate-800/40 rounded-2xl shadow-xl p-4 space-y-4">
                         <div class="flex justify-between items-center">
-                            <div>
-                                <h3 class="text-sm font-bold text-white flex items-center gap-2">
-                                    <i class="fa-solid fa-piggy-bank text-emerald-400"></i> Savings Logs
-                                </h3>
-                                <p class="text-[10px] text-slate-400 mt-0.5">View your physical savings trends.</p>
-                            </div>
+                            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-piggy-bank text-emerald-400"></i> Savings
+                            </h3>
                             <button onclick="openSavingsModal()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 active:scale-95 transition text-xs font-extrabold px-3 py-2 rounded-xl flex items-center gap-1.5 h-9">
-                                <i class="fa-solid fa-plus"></i> Record
+                                <i class="fa-solid fa-plus"></i>
                             </button>
                         </div>
-
                         <div id="savings-mobile-list" class="space-y-2 max-h-[48vh] overflow-y-auto pr-1">
-                            <!-- Savings logs rendered dynamically here -->
                         </div>
                     </div>
                 </div>
 
-                <!-- MOBILE SCREEN 4: QUICK ACTIONS -->
                 <div id="tab-panel-actions" class="tab-panel space-y-4 hidden">
-                    <!-- Commitment Form Card -->
                     <div class="bg-slate-900/60 border border-slate-800/40 rounded-2xl p-5 shadow-xl">
                         <h3 class="text-xs font-bold text-white mb-3.5 flex items-center gap-2">
-                            <i class="fa-solid fa-circle-plus text-emerald-400"></i> Add New Commitment
+                            <i class="fa-solid fa-circle-plus text-emerald-400"></i> Add Commitment
                         </h3>
                         <form id="add-commitment-form-mob" class="space-y-3">
-                            <div>
-                                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Category Group</label>
-                                <select id="form-category-mob" class="w-full h-11 px-3 bg-slate-950 border border-slate-800 rounded-xl text-xs focus:ring-1 focus:ring-emerald-500 text-slate-200">
-                                    <option value="Transport">🚗 Transport</option>
-                                    <option value="Housing & Bills">🏠 Housing & Bills</option>
-                                    <option value="Family">👨‍👩‍👦 Family</option>
-                                    <option value="Gadgets">💻 Gadgets</option>
-                                    <option value="Loans & BNPL">💳 Loans & BNPL</option>
-                                    <option value="Others">📦 Others</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Item Title</label>
-                                <input type="text" id="form-item-mob" placeholder="e.g., SPayLater, Car Payment" required class="w-full h-11 px-3 bg-slate-950 border border-slate-800 rounded-xl text-xs focus:ring-1 focus:ring-emerald-500 text-slate-200">
-                            </div>
-                            <div>
-                                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Monthly Cost (RM)</label>
-                                <div class="relative">
-                                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500 text-xs">RM</span>
-                                    <input type="number" step="0.01" id="form-amount-mob" placeholder="0.00" required class="w-full h-11 pl-9 pr-3 bg-slate-950 border border-slate-800 rounded-xl text-xs focus:ring-1 focus:ring-emerald-500 text-slate-200">
-                                </div>
-                            </div>
-                            <button type="submit" class="w-full h-11 bg-emerald-500 hover:bg-emerald-400 text-slate-950 active:scale-95 font-bold rounded-xl text-xs transition duration-150 flex items-center justify-center gap-1">
-                                Save to Cloud DB <i class="fa-solid fa-floppy-disk"></i>
+                            <select id="form-category-mob" class="w-full h-11 px-3 bg-slate-950 border border-slate-800 rounded-xl text-xs focus:ring-1 focus:ring-emerald-500 text-slate-200">
+                                <option value="Transport">🚗 Transport</option>
+                                <option value="Housing & Bills">🏠 Housing & Bills</option>
+                                <option value="Family">👨‍👩‍👦 Family</option>
+                                <option value="Gadgets">💻 Gadgets</option>
+                                <option value="Loans & BNPL">💳 Loans & BNPL</option>
+                                <option value="Others">📦 Others</option>
+                            </select>
+                            <input type="text" id="form-item-mob" placeholder="Item name" required class="w-full h-11 px-3 bg-slate-950 border border-slate-800 rounded-xl text-xs focus:ring-1 focus:ring-emerald-500 text-slate-200">
+                            <input type="number" step="0.01" id="form-amount-mob" placeholder="Amount (RM)" required class="w-full h-11 px-3 bg-slate-950 border border-slate-800 rounded-xl text-xs focus:ring-1 focus:ring-emerald-500 text-slate-200">
+                            <button type="submit" class="w-full h-11 bg-emerald-500 hover:bg-emerald-400 text-slate-950 active:scale-95 font-bold rounded-xl text-xs transition duration-150">
+                                Save <i class="fa-solid fa-floppy-disk"></i>
                             </button>
                         </form>
                     </div>
                 </div>
-
             </div>
 
-            <!-- EXPANSIVE TABLET/DESKTOP DIRECTORY GRID VIEW -->
+            <!-- DESKTOP VIEW -->
             <div class="hidden lg:grid lg:grid-cols-3 lg:gap-6">
-                <!-- Left and Center: Tracker Table & Controls -->
                 <div class="lg:col-span-2 space-y-6">
-                    <!-- Table Database Card -->
                     <div class="bg-slate-900/60 border border-slate-800/40 rounded-3xl shadow-xl overflow-hidden">
-                        
-                        <!-- Header with dynamic search/filters -->
-                        <div class="p-5 border-b border-slate-800/40 flex justify-between items-center">
-                            <div>
-                                <h3 class="text-base font-bold text-white flex items-center gap-2">
-                                    <i class="fa-solid fa-list-check text-emerald-400"></i> Commitments Directory
-                                </h3>
-                                <p class="text-xs text-slate-400 mt-0.5">Manage your structured cloud-saved expenditures.</p>
-                            </div>
-                            <div class="flex gap-2.5">
-                                <div class="relative">
-                                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500 text-xs">
-                                        <i class="fa-solid fa-magnifying-glass"></i>
-                                    </span>
-                                    <input type="text" id="search-input" oninput="renderApp()" placeholder="Search items..." class="w-48 pl-8 pr-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500 text-slate-200 transition">
-                                </div>
-                                <select id="filter-category" onchange="renderApp()" class="bg-slate-950 border border-slate-800 rounded-xl text-xs px-2.5 py-1.5 focus:ring-1 focus:ring-emerald-500 text-slate-300">
-                                    <option value="All">All Sectors</option>
-                                    <option value="Transport">Transport</option>
-                                    <option value="Housing & Bills">Housing & Bills</option>
-                                    <option value="Family">Family</option>
-                                    <option value="Gadgets">Gadgets</option>
-                                    <option value="Loans & BNPL">Loans & BNPL</option>
-                                    <option value="Others">Others</option>
-                                </select>
-                            </div>
+                        <div class="p-5 border-b border-slate-800/40">
+                            <h3 class="text-base font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-list-check text-emerald-400"></i> Commitments
+                            </h3>
                         </div>
-
-                        <!-- Data table / list view -->
                         <div class="overflow-x-auto">
                             <table class="w-full text-left border-collapse">
                                 <thead>
                                     <tr class="bg-slate-950/50 border-b border-slate-800/40 text-[10px] font-bold tracking-wider text-slate-400 uppercase">
                                         <th class="px-5 py-3">Category</th>
-                                        <th class="px-5 py-3">Item / Description</th>
+                                        <th class="px-5 py-3">Item</th>
                                         <th class="px-5 py-3 text-right">Monthly (RM)</th>
                                         <th class="px-5 py-3 text-center">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody id="commitments-tbody" class="divide-y divide-slate-800/40 text-xs">
-                                    <!-- Dynamic Desktop Rows Rendered Here -->
                                 </tbody>
                             </table>
                         </div>
-                        
-                        <!-- Empty State UI -->
                         <div id="table-empty-state" class="hidden p-12 text-center space-y-3">
-                            <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-slate-950 text-slate-600">
-                                <i class="fa-solid fa-folder-open text-xl"></i>
-                            </div>
-                            <h4 class="text-sm font-bold text-slate-300">No Commitments Recorded</h4>
-                            <p class="text-xs text-slate-500 max-w-sm mx-auto">Click "Add Commitment" on the side panel to write records directly to Cloud Firestore.</p>
+                            <p class="text-xs text-slate-500">No commitments yet</p>
                         </div>
                     </div>
 
-                    <!-- Savings History Section -->
                     <div class="bg-slate-900/60 border border-slate-800/40 rounded-3xl shadow-xl overflow-hidden">
-                        <div class="p-5 border-b border-slate-800/40">
-                            <div class="flex justify-between items-center">
-                                <div>
-                                    <h3 class="text-base font-bold text-white flex items-center gap-2">
-                                        <i class="fa-solid fa-piggy-bank text-emerald-400"></i> Monthly Savings Vault
-                                    </h3>
-                                    <p class="text-xs text-slate-400 mt-0.5">Track actual savings amounts synced securely in real-time.</p>
-                                </div>
-                                <button onclick="openSavingsModal()" class="bg-emerald-500/10 hover:bg-emerald-500 hover:text-slate-950 text-emerald-400 transition text-xs font-bold px-3 py-1.5 rounded-xl flex items-center gap-1.5 border border-emerald-500/20">
-                                    <i class="fa-solid fa-plus"></i> Record Savings
-                                </button>
-                            </div>
+                        <div class="p-5 border-b border-slate-800/40 flex justify-between items-center">
+                            <h3 class="text-base font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-piggy-bank text-emerald-400"></i> Savings
+                            </h3>
+                            <button onclick="openSavingsModal()" class="bg-emerald-500/10 hover:bg-emerald-500 hover:text-slate-950 text-emerald-400 transition text-xs font-bold px-3 py-1.5 rounded-xl flex items-center gap-1.5 border border-emerald-500/20">
+                                <i class="fa-solid fa-plus"></i> Record
+                            </button>
                         </div>
-
-                        <!-- Savings Records List -->
                         <div class="overflow-x-auto">
                             <table class="w-full text-left border-collapse">
                                 <thead>
                                     <tr class="bg-slate-950/50 border-b border-slate-800/40 text-[10px] font-bold tracking-wider text-slate-400 uppercase">
-                                        <th class="px-5 py-3">Month / Year</th>
-                                        <th class="px-5 py-3">Goal Context</th>
+                                        <th class="px-5 py-3">Month</th>
+                                        <th class="px-5 py-3">Note</th>
                                         <th class="px-5 py-3 text-right">Amount (RM)</th>
                                         <th class="px-5 py-3 text-center">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody id="savings-tbody" class="divide-y divide-slate-800/40 text-xs">
-                                    <!-- Dynamic Savings Records Rendered Here -->
                                 </tbody>
                             </table>
                         </div>
-
-                        <!-- Empty State for Savings -->
                         <div id="savings-empty-state" class="hidden p-10 text-center space-y-3">
-                            <div class="inline-flex items-center justify-center w-11 h-11 rounded-full bg-slate-950 text-slate-600">
-                                <i class="fa-solid fa-coins text-lg"></i>
-                            </div>
-                            <p class="text-xs text-slate-400">No savings logged yet. Hit "Record Savings" to start tracking!</p>
+                            <p class="text-xs text-slate-400">No savings logged yet</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Right Sidebar: Interactive Inputs & Visuals -->
                 <div class="space-y-6">
-                    <!-- Commitment Form Card -->
                     <div class="bg-slate-900/60 border border-slate-800/40 rounded-3xl p-5 shadow-xl">
                         <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
-                            <i class="fa-solid fa-circle-plus text-emerald-400"></i> Add New Commitment
+                            <i class="fa-solid fa-circle-plus text-emerald-400"></i> Add Commitment
                         </h3>
                         <form id="add-commitment-form" class="space-y-4">
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Category Group</label>
-                                <select id="form-category" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500 text-slate-200">
-                                    <option value="Transport">🚗 Transport</option>
-                                    <option value="Housing & Bills">🏠 Housing & Bills</option>
-                                    <option value="Family">👨‍👩‍👦 Family</option>
-                                    <option value="Gadgets">💻 Gadgets</option>
-                                    <option value="Loans & BNPL">💳 Loans & BNPL</option>
-                                    <option value="Others">📦 Others</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Item Title</label>
-                                <input type="text" id="form-item" placeholder="e.g., SPayLater, Car Payment" required class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500 text-slate-200">
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Monthly Cost (RM)</label>
-                                <div class="relative">
-                                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500 text-xs">RM</span>
-                                    <input type="number" step="0.01" id="form-amount" placeholder="0.00" required class="w-full pl-9 pr-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500 text-slate-200">
-                                </div>
-                            </div>
+                            <select id="form-category" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500 text-slate-200">
+                                <option value="Transport">🚗 Transport</option>
+                                <option value="Housing & Bills">🏠 Housing & Bills</option>
+                                <option value="Family">👨‍👩‍👦 Family</option>
+                                <option value="Gadgets">💻 Gadgets</option>
+                                <option value="Loans & BNPL">💳 Loans & BNPL</option>
+                                <option value="Others">📦 Others</option>
+                            </select>
+                            <input type="text" id="form-item" placeholder="e.g., SPayLater, Car Payment" required class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500 text-slate-200">
+                            <input type="number" step="0.01" id="form-amount" placeholder="0.00" required class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500 text-slate-200">
                             <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-2.5 px-4 rounded-xl text-xs transition duration-200">
-                                Save to Cloud DB <i class="fa-solid fa-floppy-disk ml-1"></i>
+                                Save <i class="fa-solid fa-floppy-disk ml-1"></i>
                             </button>
                         </form>
                     </div>
 
-                    <!-- Visual Doughnut Chart Analysis -->
                     <div class="bg-slate-900/60 border border-slate-800/40 rounded-3xl p-5 shadow-xl">
                         <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
-                            <i class="fa-solid fa-chart-pie text-emerald-400"></i> Allocation Distribution
+                            <i class="fa-solid fa-chart-pie text-emerald-400"></i> Distribution
                         </h3>
                         <div class="relative h-48 flex justify-center items-center">
                             <canvas id="category-chart"></canvas>
@@ -480,146 +341,106 @@
         </div>
     </main>
 
-    <!-- Sticky Bottom Navigation Bar (ONLY Visible on Mobile Viewports, Thumb-Optimized) -->
+    <!-- Bottom Navigation (Mobile) -->
     <nav class="lg:hidden fixed bottom-0 inset-x-0 bg-slate-900/90 backdrop-blur-md border-t border-slate-800/60 flex justify-around items-center py-2 px-3 z-50 shadow-2xl ios-bottom-padding">
         <button onclick="switchMobileTab('overview')" id="nav-tab-overview" class="flex flex-col items-center gap-1 py-1 px-3 text-emerald-400 transition active:scale-95">
             <i class="fa-solid fa-chart-pie text-lg"></i>
-            <span class="text-[9px] font-bold tracking-wide">Overview</span>
+            <span class="text-[9px] font-bold">Overview</span>
         </button>
         <button onclick="switchMobileTab('directory')" id="nav-tab-directory" class="flex flex-col items-center gap-1 py-1 px-3 text-slate-400 transition active:scale-95">
             <i class="fa-solid fa-list-ul text-lg"></i>
-            <span class="text-[9px] font-bold tracking-wide">Directory</span>
+            <span class="text-[9px] font-bold">List</span>
         </button>
         <button onclick="switchMobileTab('vault')" id="nav-tab-vault" class="flex flex-col items-center gap-1 py-1 px-3 text-slate-400 transition active:scale-95">
             <i class="fa-solid fa-piggy-bank text-lg"></i>
-            <span class="text-[9px] font-bold tracking-wide">Savings</span>
+            <span class="text-[9px] font-bold">Savings</span>
         </button>
         <button onclick="switchMobileTab('actions')" id="nav-tab-actions" class="flex flex-col items-center gap-1 py-1 px-3 text-slate-400 transition active:scale-95">
             <i class="fa-solid fa-circle-plus text-lg"></i>
-            <span class="text-[9px] font-bold tracking-wide">Add</span>
+            <span class="text-[9px] font-bold">Add</span>
         </button>
     </nav>
 
-    <!-- FOOTER (ONLY visible on Desktop Viewport) -->
-    <footer class="hidden lg:block bg-slate-950 border-t border-slate-900/60 py-4 px-6 text-center text-xs text-slate-500">
-        <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <span>&copy; 2026 Commitment Tracker - Multi-User Edition. All rights reserved.</span>
-            <span class="flex items-center gap-1.5"><i class="fa-solid fa-cloud text-emerald-500/80"></i> 100% Secure Google Cloud Firestore Real-time Synced.</span>
-        </div>
-    </footer>
-
-    <!-- MODAL: Edit Commitment Entry -->
+    <!-- MODALS -->
     <div id="edit-commitment-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full overflow-hidden shadow-2xl">
             <div class="px-5 py-4 border-b border-slate-800/80 flex justify-between items-center">
-                <h3 class="text-sm font-extrabold text-white flex items-center gap-1.5">
-                    <i class="fa-solid fa-pen-to-square text-emerald-400"></i> Edit Commitment
-                </h3>
-                <button onclick="closeEditModal()" class="text-slate-400 hover:text-white p-1 transition"><i class="fa-solid fa-xmark text-lg"></i></button>
+                <h3 class="text-sm font-extrabold text-white">Edit Commitment</h3>
+                <button onclick="closeEditModal()" class="text-slate-400 hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <form id="edit-commitment-form" class="p-5 space-y-4">
                 <input type="hidden" id="edit-id">
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Category Group</label>
-                    <select id="edit-category" class="w-full h-11 px-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200">
-                        <option value="Transport">🚗 Transport</option>
-                        <option value="Housing & Bills">🏠 Housing & Bills</option>
-                        <option value="Family">👨‍👩‍👦 Family</option>
-                        <option value="Gadgets">💻 Gadgets</option>
-                        <option value="Loans & BNPL">💳 Loans & BNPL</option>
-                        <option value="Others">📦 Others</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Item Name</label>
-                    <input type="text" id="edit-item" required class="w-full h-11 px-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200">
-                </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Monthly Cost (RM)</label>
-                    <input type="number" step="0.01" id="edit-amount" required class="w-full h-11 px-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200">
-                </div>
+                <select id="edit-category" class="w-full h-11 px-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200">
+                    <option value="Transport">🚗 Transport</option>
+                    <option value="Housing & Bills">🏠 Housing & Bills</option>
+                    <option value="Family">👨‍👩‍👦 Family</option>
+                    <option value="Gadgets">💻 Gadgets</option>
+                    <option value="Loans & BNPL">💳 Loans & BNPL</option>
+                    <option value="Others">📦 Others</option>
+                </select>
+                <input type="text" id="edit-item" required class="w-full h-11 px-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200">
+                <input type="number" step="0.01" id="edit-amount" required class="w-full h-11 px-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200">
                 <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" onclick="closeEditModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold px-4 h-10 rounded-xl transition">Cancel</button>
-                    <button type="submit" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-extrabold px-4 h-10 rounded-xl transition">Apply Edits</button>
+                    <button type="button" onclick="closeEditModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold px-4 h-10 rounded-xl">Cancel</button>
+                    <button type="submit" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-extrabold px-4 h-10 rounded-xl">Save</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- MODAL: Record Monthly Savings -->
     <div id="savings-record-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full overflow-hidden shadow-2xl">
             <div class="px-5 py-4 border-b border-slate-800/80 flex justify-between items-center">
-                <h3 class="text-sm font-extrabold text-white flex items-center gap-1.5">
-                    <i class="fa-solid fa-piggy-bank text-emerald-400"></i> Record Monthly Savings
-                </h3>
-                <button onclick="closeSavingsModal()" class="text-slate-400 hover:text-white p-1 transition"><i class="fa-solid fa-xmark text-lg"></i></button>
+                <h3 class="text-sm font-extrabold text-white">Record Savings</h3>
+                <button onclick="closeSavingsModal()" class="text-slate-400 hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <form id="savings-record-form" class="p-5 space-y-4">
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Month & Year</label>
-                    <input type="month" id="savings-month" required class="w-full h-11 px-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200">
-                </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Context / Goal (Optional)</label>
-                    <input type="text" id="savings-note" placeholder="e.g., Emergency fund, Sinking fund" class="w-full h-11 px-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200">
-                </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Amount Saved (RM)</label>
-                    <input type="number" step="0.01" id="savings-amount" placeholder="0.00" required class="w-full h-11 px-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200">
-                </div>
+                <input type="month" id="savings-month" required class="w-full h-11 px-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200">
+                <input type="text" id="savings-note" placeholder="e.g., Emergency fund" class="w-full h-11 px-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200">
+                <input type="number" step="0.01" id="savings-amount" placeholder="0.00" required class="w-full h-11 px-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200">
                 <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" onclick="closeSavingsModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold px-4 h-10 rounded-xl transition">Cancel</button>
-                    <button type="submit" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-extrabold px-4 h-10 rounded-xl transition">Save Log</button>
+                    <button type="button" onclick="closeSavingsModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold px-4 h-10 rounded-xl">Cancel</button>
+                    <button type="submit" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-extrabold px-4 h-10 rounded-xl">Save</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- MODAL: Edit Salary -->
     <div id="salary-edit-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-sm w-full overflow-hidden shadow-2xl">
             <div class="px-5 py-4 border-b border-slate-800/80 flex justify-between items-center">
-                <h3 class="text-sm font-extrabold text-white flex items-center gap-1.5">
-                    <i class="fa-solid fa-coins text-emerald-400"></i> Edit Base Salary
-                </h3>
-                <button onclick="closeSalaryModal()" class="text-slate-400 hover:text-white p-1 transition"><i class="fa-solid fa-xmark text-lg"></i></button>
+                <h3 class="text-sm font-extrabold text-white">Edit Salary</h3>
+                <button onclick="closeSalaryModal()" class="text-slate-400 hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <form id="salary-edit-form" class="p-5 space-y-4">
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Base Salary (RM)</label>
-                    <input type="number" step="0.01" id="edit-salary-amount" required class="w-full h-11 px-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200">
-                </div>
+                <input type="number" step="0.01" id="edit-salary-amount" required class="w-full h-11 px-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200">
                 <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" onclick="closeSalaryModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold px-4 h-10 rounded-xl transition">Cancel</button>
-                    <button type="submit" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-extrabold px-4 h-10 rounded-xl transition">Update</button>
+                    <button type="button" onclick="closeSalaryModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold px-4 h-10 rounded-xl">Cancel</button>
+                    <button type="submit" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-extrabold px-4 h-10 rounded-xl">Update</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- MODAL: Custom Delete Confirmation -->
     <div id="delete-confirm-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-sm w-full overflow-hidden shadow-2xl transition-all scale-95 duration-200">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-sm w-full overflow-hidden shadow-2xl">
             <div class="p-6 text-center space-y-4">
                 <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20">
                     <i class="fa-solid fa-triangle-exclamation text-xl"></i>
                 </div>
                 <div class="space-y-1.5">
-                    <h3 class="text-base font-bold text-white">Confirm Removal</h3>
-                    <p id="delete-modal-msg" class="text-xs text-slate-400 leading-relaxed">Are you sure you want to permanently delete this record? This action cannot be undone.</p>
+                    <h3 class="text-base font-bold text-white">Confirm Delete</h3>
+                    <p id="delete-modal-msg" class="text-xs text-slate-400">Are you sure?</p>
                 </div>
                 <div class="flex flex-col sm:flex-row gap-2 justify-center pt-2 w-full">
-                    <button onclick="closeDeleteModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold py-3 px-4 rounded-xl transition order-2 sm:order-1 sm:flex-1">Cancel</button>
-                    <button id="delete-modal-confirm-btn" class="bg-rose-500 hover:bg-rose-400 text-white text-xs font-bold py-3 px-4 rounded-xl transition order-1 sm:order-2 sm:flex-1">Delete Record</button>
+                    <button onclick="closeDeleteModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold py-3 px-4 rounded-xl order-2 sm:order-1 sm:flex-1">Cancel</button>
+                    <button id="delete-modal-confirm-btn" class="bg-rose-500 hover:bg-rose-400 text-white text-xs font-bold py-3 px-4 rounded-xl order-1 sm:order-2 sm:flex-1">Delete</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- CORE APPLICATION LOGIC & DATABASE ENGINE -->
     <script>
-        // FIREBASE CONFIGURATION
         const firebaseConfig = {
             apiKey: "AIzaSyB3HV2fLQDqAZQoAMq_Ava2hjPNAmqJ23s",
             authDomain: "commitment-tracker-d78a4.firebaseapp.com",
@@ -632,39 +453,34 @@
         let appState = {
             authenticated: false,
             currentUser: null,
-            salary: 6500.00,
+            salary: 0,
             commitments: [],
             savings: [],
             firebaseApp: null,
             firebaseDB: null,
             firebaseAuth: null,
-            currentMobileTab: "overview"
+            currentMobileTab: "overview",
+            unsubscribers: []
         };
 
-        let deleteTarget = {
-            type: null, 
-            id: null,
-            label: ''
-        };
-
+        let deleteTarget = { type: null, id: null, label: '' };
         let chartInstanceDesk = null;
         let chartInstanceMob = null;
 
-        // On Load initialization
         window.addEventListener('load', () => {
             setupEventListeners();
             initCharts();
             switchMobileTab('overview');
+            initializeDatabaseConnection();
         });
 
-        // Initialize Database Connection
         async function initializeDatabaseConnection() {
             const badge = document.getElementById("db-status-badge");
             
             try {
                 if (badge) {
                     badge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20";
-                    badge.innerHTML = `<span class="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse"></span> Connecting Cloud`;
+                    badge.innerHTML = `<span class="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse"></span> Connecting`;
                 }
 
                 const app = window.FirebaseCore.initializeApp(firebaseConfig);
@@ -675,44 +491,61 @@
                 appState.firebaseAuth = auth;
                 appState.firebaseDB = db;
 
-                const credential = await window.FirebaseAuth.signInAnonymously(auth);
+                await window.FirebaseAuth.signInAnonymously(auth);
 
                 if (badge) {
                     badge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
-                    badge.innerHTML = `<span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span> Online Synced`;
+                    badge.innerHTML = `<span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span> Ready`;
                 }
-
-                appState.authenticated = true;
-                showNotification("Database initialized successfully.");
 
             } catch (err) {
                 console.error("Firebase error:", err);
-                showNotification("Could not sync with Firebase. Check configuration.", "error");
                 if (badge) {
                     badge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20";
-                    badge.innerHTML = `<span class="h-1.5 w-1.5 rounded-full bg-rose-400"></span> Connection Error`;
+                    badge.innerHTML = `<span class="h-1.5 w-1.5 rounded-full bg-rose-400"></span> Error`;
                 }
             }
         }
 
-        // Bind Firestore Real-time Listeners for a specific user
-        function bindFirestoreRealtimeListeners(userId) {
-            const appId = 'commitment-tracker-d78a4';
-            
-            // Track base salary changes
-            const settingsDocRef = window.FirebaseFirestore.doc(appState.firebaseDB, 'users', userId, 'settings', 'salary');
-            window.FirebaseFirestore.onSnapshot(settingsDocRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    appState.salary = parseFloat(docSnap.data().salary) || 6500.00;
-                    renderApp();
+        async function ensureSalaryInitialized(userId) {
+            try {
+                const settingsDocRef = window.FirebaseFirestore.doc(appState.firebaseDB, 'users', userId, 'settings', 'salary');
+                const salarySnap = await window.FirebaseFirestore.getDoc(settingsDocRef);
+                
+                if (!salarySnap.exists()) {
+                    await window.FirebaseFirestore.setDoc(settingsDocRef, { salary: 6500.00 });
+                    appState.salary = 6500.00;
+                } else {
+                    appState.salary = parseFloat(salarySnap.data().salary) || 6500.00;
                 }
+            } catch (err) {
+                console.error("Error initializing salary:", err);
+                appState.salary = 6500.00;
+            }
+        }
+
+        function bindFirestoreRealtimeListeners(userId) {
+            // Clear old listeners
+            appState.unsubscribers.forEach(unsub => unsub());
+            appState.unsubscribers = [];
+
+            // Salary listener
+            const settingsDocRef = window.FirebaseFirestore.doc(appState.firebaseDB, 'users', userId, 'settings', 'salary');
+            const unsub1 = window.FirebaseFirestore.onSnapshot(settingsDocRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    appState.salary = parseFloat(docSnap.data().salary) || 0;
+                } else {
+                    appState.salary = 0;
+                }
+                renderApp();
             }, (error) => {
                 console.error("Salary sync error:", error);
             });
+            appState.unsubscribers.push(unsub1);
 
-            // Sync Commitments
+            // Commitments listener
             const commitmentsRef = window.FirebaseFirestore.collection(appState.firebaseDB, 'users', userId, 'commitments');
-            window.FirebaseFirestore.onSnapshot(commitmentsRef, (snapshot) => {
+            const unsub2 = window.FirebaseFirestore.onSnapshot(commitmentsRef, (snapshot) => {
                 const loaded = [];
                 snapshot.forEach(doc => {
                     loaded.push({ id: doc.id, ...doc.data() });
@@ -722,10 +555,11 @@
             }, (error) => {
                 console.error("Commitment sync error:", error);
             });
+            appState.unsubscribers.push(unsub2);
 
-            // Sync Savings Logs
+            // Savings listener
             const savingsRef = window.FirebaseFirestore.collection(appState.firebaseDB, 'users', userId, 'savings');
-            window.FirebaseFirestore.onSnapshot(savingsRef, (snapshot) => {
+            const unsub3 = window.FirebaseFirestore.onSnapshot(savingsRef, (snapshot) => {
                 const loaded = [];
                 snapshot.forEach(doc => {
                     loaded.push({ id: doc.id, ...doc.data() });
@@ -735,12 +569,11 @@
             }, (error) => {
                 console.error("Savings sync error:", error);
             });
+            appState.unsubscribers.push(unsub3);
         }
 
-        // Simple in-memory user database (for demo purposes)
         const userDatabase = {};
 
-        // Login handler
         async function handleLogin(userId, password) {
             if (!userDatabase[userId]) {
                 showNotification("User not found. Please sign up first.", "error");
@@ -753,10 +586,9 @@
             }
 
             appState.currentUser = userId;
-            await initializeDatabaseConnection();
+            await ensureSalaryInitialized(userId);
             bindFirestoreRealtimeListeners(userId);
 
-            // Show dashboard
             document.getElementById("auth-wall").classList.add("hidden");
             document.getElementById("dashboard-panel").classList.remove("hidden");
             document.getElementById("logout-btn").classList.remove("hidden");
@@ -766,17 +598,14 @@
             showNotification(`Welcome back, ${userId}!`);
         }
 
-        // Signup handler
         async function handleSignup(userId, password) {
             if (userDatabase[userId]) {
-                showNotification("User ID already exists. Please choose another.", "error");
+                showNotification("User ID already exists.", "error");
                 return;
             }
 
-            // Create user document
             userDatabase[userId] = { password, createdAt: new Date().toISOString() };
 
-            // Initialize user in Firestore
             try {
                 const userDocRef = window.FirebaseFirestore.doc(appState.firebaseDB, 'users', userId);
                 await window.FirebaseFirestore.setDoc(userDocRef, { 
@@ -784,14 +613,13 @@
                     createdAt: new Date().toISOString() 
                 });
 
-                // Initialize salary settings
                 const settingsDocRef = window.FirebaseFirestore.doc(appState.firebaseDB, 'users', userId, 'settings', 'salary');
                 await window.FirebaseFirestore.setDoc(settingsDocRef, { salary: 6500.00 });
 
                 appState.currentUser = userId;
+                appState.salary = 6500.00;
                 bindFirestoreRealtimeListeners(userId);
 
-                // Show dashboard
                 document.getElementById("auth-wall").classList.add("hidden");
                 document.getElementById("dashboard-panel").classList.remove("hidden");
                 document.getElementById("logout-btn").classList.remove("hidden");
@@ -823,9 +651,9 @@
                 if (button) {
                     if (id === tabName) {
                         button.classList.remove('text-slate-400');
-                        button.classList.add('text-emerald-400', 'scale-105');
+                        button.classList.add('text-emerald-400');
                     } else {
-                        button.classList.remove('text-emerald-400', 'scale-105');
+                        button.classList.remove('text-emerald-400');
                         button.classList.add('text-slate-400');
                     }
                 }
@@ -837,20 +665,19 @@
         }
 
         function setupEventListeners() {
-            // Tab switching for login/signup
             const tabLoginBtn = document.getElementById("tab-login-btn");
             const tabSignupBtn = document.getElementById("tab-signup-btn");
             const loginForm = document.getElementById("app-login-form");
             const signupForm = document.getElementById("app-signup-form");
 
-            if (tabLoginBtn && tabSignupBtn && loginForm && signupForm) {
+            if (tabLoginBtn && tabSignupBtn) {
                 tabLoginBtn.addEventListener("click", () => {
                     tabLoginBtn.classList.add("bg-emerald-500/20", "text-emerald-400");
                     tabLoginBtn.classList.remove("text-slate-400");
                     tabSignupBtn.classList.remove("bg-emerald-500/20", "text-emerald-400");
                     tabSignupBtn.classList.add("text-slate-400");
-                    loginForm.classList.remove("hidden");
-                    signupForm.classList.add("hidden");
+                    if (loginForm) loginForm.classList.remove("hidden");
+                    if (signupForm) signupForm.classList.add("hidden");
                 });
 
                 tabSignupBtn.addEventListener("click", () => {
@@ -858,12 +685,11 @@
                     tabSignupBtn.classList.remove("text-slate-400");
                     tabLoginBtn.classList.remove("bg-emerald-500/20", "text-emerald-400");
                     tabLoginBtn.classList.add("text-slate-400");
-                    signupForm.classList.remove("hidden");
-                    loginForm.classList.add("hidden");
+                    if (signupForm) signupForm.classList.remove("hidden");
+                    if (loginForm) loginForm.classList.add("hidden");
                 });
             }
 
-            // Login form submit
             if (loginForm) {
                 loginForm.addEventListener("submit", (e) => {
                     e.preventDefault();
@@ -873,30 +699,28 @@
                 });
             }
 
-            // Signup form submit
             if (signupForm) {
                 signupForm.addEventListener("submit", (e) => {
                     e.preventDefault();
                     const userId = document.getElementById("signup-userid").value;
                     const password = document.getElementById("signup-password").value;
-
                     if (!userId || !password) {
                         showNotification("Please fill in all fields.", "error");
                         return;
                     }
-
                     handleSignup(userId, password);
                 });
             }
 
-            // Logout button
             const logoutBtn = document.getElementById("logout-btn");
             if (logoutBtn) {
                 logoutBtn.addEventListener("click", () => {
                     appState.currentUser = null;
                     appState.commitments = [];
                     appState.savings = [];
-                    appState.salary = 6500.00;
+                    appState.salary = 0;
+                    appState.unsubscribers.forEach(unsub => unsub());
+                    appState.unsubscribers = [];
 
                     document.getElementById("auth-wall").classList.remove("hidden");
                     document.getElementById("dashboard-panel").classList.add("hidden");
@@ -905,14 +729,11 @@
 
                     document.getElementById("login-userid").value = "";
                     document.getElementById("login-password").value = "";
-                    document.getElementById("signup-userid").value = "";
-                    document.getElementById("signup-password").value = "";
 
                     showNotification("Logged out successfully.");
                 });
             }
 
-            // Forms Submit configurations
             const commitForm = document.getElementById("add-commitment-form");
             if (commitForm) {
                 commitForm.addEventListener("submit", (e) => handleAddCommitment(e, "form-category", "form-item", "form-amount"));
@@ -923,55 +744,16 @@
                 commitFormMob.addEventListener("submit", (e) => handleAddCommitment(e, "form-category-mob", "form-item-mob", "form-amount-mob"));
             }
 
-            async function handleAddCommitment(e, catId, itemId, amtId) {
-                e.preventDefault();
-                
-                if (!appState.currentUser) {
-                    showNotification("Please login first.", "error");
-                    return;
-                }
-
-                const catElem = document.getElementById(catId);
-                const itemElem = document.getElementById(itemId);
-                const amtElem = document.getElementById(amtId);
-
-                const category = catElem ? catElem.value : "Others";
-                const item = itemElem ? itemElem.value : "";
-                const amount = amtElem ? parseFloat(amtElem.value) : 0;
-
-                if (!item || isNaN(amount)) return;
-
-                const payload = { category, item, amount };
-
-                try {
-                    const colRef = window.FirebaseFirestore.collection(appState.firebaseDB, 'users', appState.currentUser, 'commitments');
-                    await window.FirebaseFirestore.addDoc(colRef, payload);
-                    
-                    if (itemElem) itemElem.value = "";
-                    if (amtElem) amtElem.value = "";
-                    showNotification(`Saved "${item}" to database successfully.`);
-                    
-                    if (window.innerWidth < 1024) {
-                        switchMobileTab('overview');
-                    }
-                } catch (err) {
-                    showNotification("Failed to save entry.", "error");
-                }
-            }
-
             const editCommitForm = document.getElementById("edit-commitment-form");
             if (editCommitForm) {
                 editCommitForm.addEventListener("submit", async (e) => {
                     e.preventDefault();
-                    const idVal = document.getElementById("edit-id");
-                    const catVal = document.getElementById("edit-category");
-                    const itemVal = document.getElementById("edit-item");
-                    const amtVal = document.getElementById("edit-amount");
+                    if (!appState.currentUser) return;
 
-                    const id = idVal ? idVal.value : "";
-                    const category = catVal ? catVal.value : "Others";
-                    const item = itemVal ? itemVal.value : "";
-                    const amount = amtVal ? parseFloat(amtVal.value) : 0;
+                    const id = document.getElementById("edit-id").value;
+                    const category = document.getElementById("edit-category").value;
+                    const item = document.getElementById("edit-item").value;
+                    const amount = parseFloat(document.getElementById("edit-amount").value);
 
                     if (!item || isNaN(amount)) return;
 
@@ -979,44 +761,38 @@
                         const docRef = window.FirebaseFirestore.doc(appState.firebaseDB, 'users', appState.currentUser, 'commitments', id);
                         await window.FirebaseFirestore.updateDoc(docRef, { category, item, amount });
                         closeEditModal();
-                        showNotification("Commitment revised.");
+                        showNotification("Commitment updated.");
                     } catch (err) {
-                        showNotification("Failed to update entry.", "error");
+                        console.error("Update error:", err);
+                        showNotification("Failed to update.", "error");
                     }
                 });
             }
 
-            const savingsRecordForm = document.getElementById("savings-record-form");
-            if (savingsRecordForm) {
-                savingsRecordForm.addEventListener("submit", async (e) => {
+            const savingsForm = document.getElementById("savings-record-form");
+            if (savingsForm) {
+                savingsForm.addEventListener("submit", async (e) => {
                     e.preventDefault();
-                    const monthVal = document.getElementById("savings-month");
-                    const noteVal = document.getElementById("savings-note");
-                    const amtVal = document.getElementById("savings-amount");
+                    if (!appState.currentUser) return;
 
-                    const month = monthVal ? monthVal.value : "";
-                    const note = noteVal ? (noteVal.value || "Monthly Reserve") : "Monthly Reserve";
-                    const amount = amtVal ? parseFloat(amtVal.value) : 0;
+                    const month = document.getElementById("savings-month").value;
+                    const note = document.getElementById("savings-note").value || "Savings";
+                    const amount = parseFloat(document.getElementById("savings-amount").value);
 
                     if (!month || isNaN(amount)) return;
 
-                    const payload = { month, note, amount };
-
                     try {
                         const colRef = window.FirebaseFirestore.collection(appState.firebaseDB, 'users', appState.currentUser, 'savings');
-                        await window.FirebaseFirestore.addDoc(colRef, payload);
+                        await window.FirebaseFirestore.addDoc(colRef, { month, note, amount });
                         
-                        if (monthVal) monthVal.value = "";
-                        if (noteVal) noteVal.value = "";
-                        if (amtVal) amtVal.value = "";
+                        document.getElementById("savings-month").value = "";
+                        document.getElementById("savings-note").value = "";
+                        document.getElementById("savings-amount").value = "";
                         closeSavingsModal();
-                        showNotification("Saved monthly savings log.");
-                        
-                        if (window.innerWidth < 1024) {
-                            switchMobileTab('vault');
-                        }
+                        showNotification("Savings recorded.");
                     } catch (err) {
-                        showNotification("Could not record savings.", "error");
+                        console.error("Savings error:", err);
+                        showNotification("Failed to save.", "error");
                     }
                 });
             }
@@ -1025,17 +801,19 @@
             if (salaryForm) {
                 salaryForm.addEventListener("submit", async (e) => {
                     e.preventDefault();
-                    const amtElem = document.getElementById("edit-salary-amount");
-                    const amt = amtElem ? parseFloat(amtElem.value) : 0;
-                    if (isNaN(amt) || amt <= 0) return;
+                    if (!appState.currentUser) return;
+
+                    const amt = parseFloat(document.getElementById("edit-salary-amount").value);
+                    if (isNaN(amt) || amt < 0) return;
 
                     try {
                         const docRef = window.FirebaseFirestore.doc(appState.firebaseDB, 'users', appState.currentUser, 'settings', 'salary');
                         await window.FirebaseFirestore.setDoc(docRef, { salary: amt });
                         closeSalaryModal();
-                        showNotification("Base salary updated.");
+                        showNotification("Salary updated.");
                     } catch (err) {
-                        showNotification("Could not update salary.", "error");
+                        console.error("Salary error:", err);
+                        showNotification("Failed to update salary.", "error");
                     }
                 });
             }
@@ -1046,84 +824,79 @@
             }
         }
 
-        // Render application interface
+        async function handleAddCommitment(e, catId, itemId, amtId) {
+            e.preventDefault();
+            
+            if (!appState.currentUser) {
+                showNotification("Please login first.", "error");
+                return;
+            }
+
+            const category = document.getElementById(catId).value;
+            const item = document.getElementById(itemId).value;
+            const amount = parseFloat(document.getElementById(amtId).value);
+
+            if (!item || isNaN(amount)) return;
+
+            try {
+                const colRef = window.FirebaseFirestore.collection(appState.firebaseDB, 'users', appState.currentUser, 'commitments');
+                await window.FirebaseFirestore.addDoc(colRef, { category, item, amount });
+                
+                document.getElementById(itemId).value = "";
+                document.getElementById(amtId).value = "";
+                showNotification(`Saved "${item}".`);
+                
+                if (window.innerWidth < 1024) {
+                    switchMobileTab('overview');
+                }
+            } catch (err) {
+                console.error("Add commitment error:", err);
+                showNotification("Failed to save.", "error");
+            }
+        }
+
         function renderApp() {
             const totalCommitments = appState.commitments.reduce((sum, item) => sum + Number(item.amount), 0);
-            
             const sortedSavings = [...appState.savings].sort((a,b) => b.month.localeCompare(a.month));
             const latestSavingsAmount = sortedSavings.length > 0 ? Number(sortedSavings[0].amount) : 0;
             const disposableIncome = appState.salary - totalCommitments - latestSavingsAmount;
 
-            // Update DOM metrics
-            const elements = {
-                salary: document.getElementById("salary-val-display"),
-                commit: document.getElementById("commit-val-display"),
-                savings: document.getElementById("savings-val-display"),
-                disposable: document.getElementById("disposable-val-display"),
-                commitPct: document.getElementById("commit-percentage"),
-                savingsPct: document.getElementById("savings-percentage")
-            };
-
-            if (elements.salary) elements.salary.innerText = formatCurrency(appState.salary);
-            if (elements.commit) elements.commit.innerText = formatCurrency(totalCommitments);
-            if (elements.savings) elements.savings.innerText = formatCurrency(latestSavingsAmount);
+            document.getElementById("salary-val-display").innerText = formatCurrency(appState.salary);
+            document.getElementById("commit-val-display").innerText = formatCurrency(totalCommitments);
+            document.getElementById("savings-val-display").innerText = formatCurrency(latestSavingsAmount);
             
-            if (elements.disposable) {
-                elements.disposable.innerText = formatCurrency(disposableIncome);
-                if (disposableIncome < 0) {
-                    elements.disposable.className = "text-base font-extrabold text-rose-500 animate-pulse";
-                } else {
-                    elements.disposable.className = "text-base font-extrabold text-cyan-400";
-                }
+            const disposableEl = document.getElementById("disposable-val-display");
+            disposableEl.innerText = formatCurrency(disposableIncome);
+            if (disposableIncome < 0) {
+                disposableEl.className = "text-base font-extrabold text-rose-500 animate-pulse";
+            } else {
+                disposableEl.className = "text-base font-extrabold text-cyan-400";
             }
 
             const commitPctVal = appState.salary > 0 ? ((totalCommitments / appState.salary) * 100).toFixed(1) : 0;
             const savePctVal = appState.salary > 0 ? ((latestSavingsAmount / appState.salary) * 100).toFixed(1) : 0;
 
-            if (elements.commitPct) elements.commitPct.innerText = `${commitPctVal}%`;
-            if (elements.savingsPct) elements.savingsPct.innerText = `${savePctVal}%`;
+            document.getElementById("commit-percentage").innerText = `${commitPctVal}%`;
+            document.getElementById("savings-percentage").innerText = `${savePctVal}%`;
 
-            // Commitments Search Desktop Filter
-            const searchInput = document.getElementById("search-input");
-            const searchQuery = searchInput ? searchInput.value.toLowerCase() : "";
-
-            const catFilter = document.getElementById("filter-category");
-            const filterCategory = catFilter ? catFilter.value : "All";
-
+            // Desktop table
             const tbody = document.getElementById("commitments-tbody");
             if (tbody) {
                 tbody.innerHTML = "";
-                const filteredCommitments = appState.commitments.filter(c => {
-                    const matchSearch = c.item.toLowerCase().includes(searchQuery) || c.category.toLowerCase().includes(searchQuery);
-                    const matchCategory = filterCategory === "All" || c.category === filterCategory;
-                    return matchSearch && matchCategory;
-                });
-
-                const emptyState = document.getElementById("table-empty-state");
-                if (filteredCommitments.length === 0) {
-                    if (emptyState) emptyState.classList.remove("hidden");
+                if (appState.commitments.length === 0) {
+                    document.getElementById("table-empty-state").classList.remove("hidden");
                 } else {
-                    if (emptyState) emptyState.classList.add("hidden");
-                    filteredCommitments.forEach(item => {
+                    document.getElementById("table-empty-state").classList.add("hidden");
+                    appState.commitments.forEach(item => {
                         const tr = document.createElement("tr");
-                        tr.className = "hover:bg-slate-900/40 transition group border-b border-slate-900/40";
+                        tr.className = "hover:bg-slate-900/40 transition border-b border-slate-900/40";
                         tr.innerHTML = `
-                            <td class="px-5 py-3.5 font-medium">
-                                <span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${getCategoryBadgeStyles(item.category)}">
-                                    ${item.category}
-                                </span>
-                            </td>
+                            <td class="px-5 py-3.5 font-medium"><span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${getCategoryBadgeStyles(item.category)}">${item.category}</span></td>
                             <td class="px-5 py-3.5 text-slate-300 font-semibold">${escapeHtml(item.item)}</td>
                             <td class="px-5 py-3.5 text-right font-mono text-slate-200 font-extrabold">RM ${formatCurrency(item.amount)}</td>
-                            <td class="px-5 py-3.5 text-center whitespace-nowrap">
-                                <div class="flex items-center justify-center gap-1.5">
-                                    <button onclick="triggerEdit('${item.id}', '${item.category}', '${escapeHtml(item.item)}', ${item.amount})" class="text-slate-400 hover:text-emerald-400 p-2 rounded-xl transition hover:bg-slate-800/50" title="Edit">
-                                        <i class="fa-solid fa-pen"></i>
-                                    </button>
-                                    <button onclick="triggerDelete('${item.id}', '${escapeHtml(item.item)}')" class="text-slate-400 hover:text-rose-400 p-2 rounded-xl transition hover:bg-slate-800/50" title="Delete">
-                                        <i class="fa-solid fa-trash-can"></i>
-                                    </button>
-                                </div>
+                            <td class="px-5 py-3.5 text-center">
+                                <button onclick="triggerEdit('${item.id}', '${item.category}', '${escapeHtml(item.item)}', ${item.amount})" class="text-slate-400 hover:text-emerald-400 p-2 rounded-xl transition" title="Edit"><i class="fa-solid fa-pen"></i></button>
+                                <button onclick="triggerDelete('${item.id}', '${escapeHtml(item.item)}')" class="text-slate-400 hover:text-rose-400 p-2 rounded-xl transition" title="Delete"><i class="fa-solid fa-trash-can"></i></button>
                             </td>
                         `;
                         tbody.appendChild(tr);
@@ -1131,71 +904,38 @@
                 }
             }
 
-            // Commitments Search Mobile Filter
-            const searchInputMob = document.getElementById("search-input-mob");
-            const mobSearchQuery = searchInputMob ? searchInputMob.value.toLowerCase() : "";
-
-            const filterCategoryMobElem = document.getElementById("filter-category-mob");
-            const mobFilterCategory = filterCategoryMobElem ? filterCategoryMobElem.value : "All";
-
-            const mobListContainer = document.getElementById("commitments-mobile-list");
-            if (mobListContainer) {
-                mobListContainer.innerHTML = "";
-                const mobFilteredCommitments = appState.commitments.filter(c => {
-                    const matchSearch = c.item.toLowerCase().includes(mobSearchQuery) || c.category.toLowerCase().includes(mobSearchQuery);
-                    const matchCategory = mobFilterCategory === "All" || c.category === mobFilterCategory;
-                    return matchSearch && matchCategory;
-                });
-
-                if (mobFilteredCommitments.length === 0) {
-                    mobListContainer.innerHTML = `
-                        <div class="text-center py-8 text-slate-500">
-                            <i class="fa-solid fa-folder-open text-2xl mb-1.5 block"></i>
-                            <span class="text-xs">No commitments found</span>
+            // Mobile list
+            const mobList = document.getElementById("commitments-mobile-list");
+            if (mobList) {
+                mobList.innerHTML = "";
+                appState.commitments.forEach(item => {
+                    const card = document.createElement("div");
+                    card.className = "bg-slate-950/60 border border-slate-900 rounded-2xl p-3.5 flex justify-between items-center gap-2";
+                    card.innerHTML = `
+                        <div class="space-y-1 overflow-hidden min-w-0">
+                            <span class="px-2 py-0.5 rounded-full text-[9px] font-bold ${getCategoryBadgeStyles(item.category)} block">${item.category}</span>
+                            <h4 class="text-xs font-bold text-slate-200 truncate">${escapeHtml(item.item)}</h4>
+                        </div>
+                        <div class="flex items-center gap-2.5 shrink-0">
+                            <span class="font-mono text-xs font-extrabold text-emerald-400">RM ${formatCurrency(item.amount)}</span>
+                            <div class="flex gap-1">
+                                <button onclick="triggerEdit('${item.id}', '${item.category}', '${escapeHtml(item.item)}', ${item.amount})" class="text-slate-400 hover:text-emerald-400 p-2 bg-slate-900 rounded-xl border border-slate-800 text-xs"><i class="fa-solid fa-pen"></i></button>
+                                <button onclick="triggerDelete('${item.id}', '${escapeHtml(item.item)}')" class="text-slate-400 hover:text-rose-400 p-2 bg-slate-900 rounded-xl border border-slate-800 text-xs"><i class="fa-solid fa-trash-can"></i></button>
+                            </div>
                         </div>
                     `;
-                } else {
-                    mobFilteredCommitments.forEach(item => {
-                        const card = document.createElement("div");
-                        card.className = "bg-slate-950/60 border border-slate-900 rounded-2xl p-3.5 flex justify-between items-center gap-2";
-                        card.innerHTML = `
-                            <div class="space-y-1 overflow-hidden min-w-0">
-                                <div class="flex items-center gap-1.5">
-                                    <span class="px-2 py-0.5 rounded-full text-[9px] font-bold ${getCategoryBadgeStyles(item.category)} leading-none block">
-                                        ${item.category}
-                                    </span>
-                                </div>
-                                <h4 class="text-xs font-bold text-slate-200 truncate leading-tight">${escapeHtml(item.item)}</h4>
-                            </div>
-                            <div class="flex items-center gap-2.5 shrink-0">
-                                <div class="text-right">
-                                    <span class="text-[10px] text-slate-500 block leading-none">Monthly</span>
-                                    <span class="font-mono text-xs font-extrabold text-emerald-400">RM ${formatCurrency(item.amount)}</span>
-                                </div>
-                                <div class="flex gap-1">
-                                    <button onclick="triggerEdit('${item.id}', '${item.category}', '${escapeHtml(item.item)}', ${item.amount})" class="text-slate-400 hover:text-emerald-400 p-2 bg-slate-900 rounded-xl border border-slate-800" title="Edit">
-                                        <i class="fa-solid fa-pen text-xs"></i>
-                                    </button>
-                                    <button onclick="triggerDelete('${item.id}', '${escapeHtml(item.item)}')" class="text-slate-400 hover:text-rose-450 p-2 bg-slate-900 rounded-xl border border-slate-800" title="Delete">
-                                        <i class="fa-solid fa-trash-can text-xs"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        `;
-                        mobListContainer.appendChild(card);
-                    });
-                }
+                    mobList.appendChild(card);
+                });
             }
 
-            // Desktop Savings render
+            // Savings desktop
             const savingsTbody = document.getElementById("savings-tbody");
             if (savingsTbody) {
                 savingsTbody.innerHTML = "";
-                const emptySavings = document.getElementById("savings-empty-state");
                 if (appState.savings.length === 0) {
-                    if (emptySavings) emptySavings.classList.remove("hidden");
+                    document.getElementById("savings-empty-state").classList.remove("hidden");
                 } else {
-                    if (emptySavings) emptySavings.classList.add("hidden");
+                    document.getElementById("savings-empty-state").classList.add("hidden");
                     sortedSavings.forEach(record => {
                         const tr = document.createElement("tr");
                         tr.className = "hover:bg-slate-900/40 transition border-b border-slate-900/40";
@@ -1203,28 +943,19 @@
                             <td class="px-5 py-3 font-semibold text-emerald-400">${formatMonthYear(record.month)}</td>
                             <td class="px-5 py-3 text-slate-400">${escapeHtml(record.note)}</td>
                             <td class="px-5 py-3 text-right font-mono text-slate-200 font-extrabold">RM ${formatCurrency(record.amount)}</td>
-                            <td class="px-5 py-3 text-center">
-                                <button onclick="triggerDeleteSavings('${record.id}')" class="text-slate-400 hover:text-rose-400 p-2 rounded-xl transition hover:bg-slate-800/50" title="Delete Log">
-                                    <i class="fa-solid fa-trash-can"></i>
-                                </button>
-                            </td>
+                            <td class="px-5 py-3 text-center"><button onclick="triggerDeleteSavings('${record.id}')" class="text-slate-400 hover:text-rose-400 p-2 rounded-xl transition"><i class="fa-solid fa-trash-can"></i></button></td>
                         `;
                         savingsTbody.appendChild(tr);
                     });
                 }
             }
 
-            // Mobile Savings render
-            const savingsMobContainer = document.getElementById("savings-mobile-list");
-            if (savingsMobContainer) {
-                savingsMobContainer.innerHTML = "";
+            // Savings mobile
+            const savingsMobList = document.getElementById("savings-mobile-list");
+            if (savingsMobList) {
+                savingsMobList.innerHTML = "";
                 if (appState.savings.length === 0) {
-                    savingsMobContainer.innerHTML = `
-                        <div class="text-center py-8 text-slate-500">
-                            <i class="fa-solid fa-piggy-bank text-2xl mb-1.5 block"></i>
-                            <span class="text-xs">No savings entries logged</span>
-                        </div>
-                    `;
+                    savingsMobList.innerHTML = '<div class="text-center py-8 text-slate-500"><i class="fa-solid fa-piggy-bank text-2xl block"></i><span class="text-xs">No savings logged</span></div>';
                 } else {
                     sortedSavings.forEach(record => {
                         const card = document.createElement("div");
@@ -1232,19 +963,14 @@
                         card.innerHTML = `
                             <div class="space-y-0.5 overflow-hidden">
                                 <span class="text-[10px] font-extrabold text-emerald-400 block">${formatMonthYear(record.month)}</span>
-                                <p class="text-xs text-slate-400 truncate leading-snug">${escapeHtml(record.note)}</p>
+                                <p class="text-xs text-slate-400 truncate">${escapeHtml(record.note)}</p>
                             </div>
                             <div class="flex items-center gap-3 shrink-0">
-                                <div class="text-right">
-                                    <span class="text-[10px] text-slate-500 block leading-none">Saved</span>
-                                    <span class="font-mono text-xs font-bold text-emerald-400">RM ${formatCurrency(record.amount)}</span>
-                                </div>
-                                <button onclick="triggerDeleteSavings('${record.id}')" class="text-slate-400 hover:text-rose-450 p-2 bg-slate-900 rounded-xl border border-slate-800" title="Delete Log">
-                                    <i class="fa-solid fa-trash-can text-xs"></i>
-                                </button>
+                                <span class="font-mono text-xs font-bold text-emerald-400">RM ${formatCurrency(record.amount)}</span>
+                                <button onclick="triggerDeleteSavings('${record.id}')" class="text-slate-400 hover:text-rose-400 p-2 bg-slate-900 rounded-xl border border-slate-800 text-xs"><i class="fa-solid fa-trash-can"></i></button>
                             </div>
                         `;
-                        savingsMobContainer.appendChild(card);
+                        savingsMobList.appendChild(card);
                     });
                 }
             }
@@ -1253,83 +979,34 @@
         }
 
         function initCharts() {
-            const chartConfig = {
+            const config = {
                 type: 'doughnut',
-                data: {
-                    labels: [],
-                    datasets: [{
-                        data: [],
-                        backgroundColor: [
-                            '#10b981', '#3b82f6', '#ec4899', '#f59e0b', '#8b5cf6', '#64748b'
-                        ],
-                        borderWidth: 0,
-                        hoverOffset: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: true,
-                            position: 'bottom',
-                            labels: {
-                                color: '#94a3b8',
-                                font: {
-                                    size: 10,
-                                    family: 'Plus Jakarta Sans'
-                                },
-                                boxWidth: 8,
-                                padding: 8
-                            }
-                        }
-                    },
-                    cutout: '68%'
-                }
+                data: { labels: [], datasets: [{ data: [], backgroundColor: ['#10b981', '#3b82f6', '#ec4899', '#f59e0b', '#8b5cf6', '#64748b'], borderWidth: 0, hoverOffset: 4 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, position: 'bottom', labels: { color: '#94a3b8', font: { size: 10, family: 'Plus Jakarta Sans' }, boxWidth: 8, padding: 8 } } }, cutout: '68%' }
             };
 
             const canvasDesk = document.getElementById('category-chart');
-            if (canvasDesk) {
-                const ctxDesk = canvasDesk.getContext('2d');
-                chartInstanceDesk = new Chart(ctxDesk, chartConfig);
-            }
+            if (canvasDesk) chartInstanceDesk = new Chart(canvasDesk.getContext('2d'), config);
 
             const canvasMob = document.getElementById('category-chart-mob');
-            if (canvasMob) {
-                const ctxMob = canvasMob.getContext('2d');
-                const mobileConfig = JSON.parse(JSON.stringify(chartConfig));
-                mobileConfig.options.plugins.legend.labels.font = {
-                    size: 9,
-                    family: 'Plus Jakarta Sans'
-                };
-                chartInstanceMob = new Chart(ctxMob, mobileConfig);
-            }
+            if (canvasMob) chartInstanceMob = new Chart(canvasMob.getContext('2d'), JSON.parse(JSON.stringify(config)));
         }
 
         function updateChartsData() {
-            const categorySums = {
-                "Transport": 0,
-                "Housing & Bills": 0,
-                "Family": 0,
-                "Gadgets": 0,
-                "Loans & BNPL": 0,
-                "Others": 0
-            };
-
+            const sums = { "Transport": 0, "Housing & Bills": 0, "Family": 0, "Gadgets": 0, "Loans & BNPL": 0, "Others": 0 };
             appState.commitments.forEach(c => {
-                const cat = categorySums[c.category] !== undefined ? c.category : "Others";
-                categorySums[cat] += Number(c.amount);
+                const cat = sums[c.category] !== undefined ? c.category : "Others";
+                sums[cat] += Number(c.amount);
             });
 
-            const labels = Object.keys(categorySums).filter(k => categorySums[k] > 0);
-            const data = labels.map(k => categorySums[k]);
+            const labels = Object.keys(sums).filter(k => sums[k] > 0);
+            const data = labels.map(k => sums[k]);
 
             if (chartInstanceDesk) {
                 chartInstanceDesk.data.labels = labels;
                 chartInstanceDesk.data.datasets[0].data = data;
                 chartInstanceDesk.update();
             }
-
             if (chartInstanceMob) {
                 chartInstanceMob.data.labels = labels;
                 chartInstanceMob.data.datasets[0].data = data;
@@ -1338,93 +1015,58 @@
         }
 
         function triggerEdit(id, category, item, amount) {
-            const editId = document.getElementById("edit-id");
-            const editCat = document.getElementById("edit-category");
-            const editItem = document.getElementById("edit-item");
-            const editAmt = document.getElementById("edit-amount");
-
-            if (editId) editId.value = id;
-            if (editCat) editCat.value = category;
-            if (editItem) editItem.value = item;
-            if (editAmt) editAmt.value = amount;
-
-            const modal = document.getElementById("edit-commitment-modal");
-            if (modal) modal.classList.remove("hidden");
+            document.getElementById("edit-id").value = id;
+            document.getElementById("edit-category").value = category;
+            document.getElementById("edit-item").value = item;
+            document.getElementById("edit-amount").value = amount;
+            document.getElementById("edit-commitment-modal").classList.remove("hidden");
         }
 
         function triggerDelete(id, item) {
             deleteTarget = { type: 'commitment', id, label: item };
-            const msg = document.getElementById("delete-modal-msg");
-            if (msg) msg.innerText = `Are you sure you want to permanently delete the commitment for "${item}"?`;
-            
-            const modal = document.getElementById("delete-confirm-modal");
-            if (modal) modal.classList.remove("hidden");
+            document.getElementById("delete-modal-msg").innerText = `Delete "${item}"?`;
+            document.getElementById("delete-confirm-modal").classList.remove("hidden");
         }
 
         function triggerDeleteSavings(id) {
-            deleteTarget = { type: 'savings', id, label: 'Savings Log' };
-            const msg = document.getElementById("delete-modal-msg");
-            if (msg) msg.innerText = `Are you sure you want to permanently delete this logged savings record?`;
-            
-            const modal = document.getElementById("delete-confirm-modal");
-            if (modal) modal.classList.remove("hidden");
-        }
-
-        function closeDeleteModal() {
-            const modal = document.getElementById("delete-confirm-modal");
-            if (modal) modal.classList.add("hidden");
+            deleteTarget = { type: 'savings', id, label: 'Savings' };
+            document.getElementById("delete-modal-msg").innerText = "Delete this savings entry?";
+            document.getElementById("delete-confirm-modal").classList.remove("hidden");
         }
 
         async function executeDelete() {
-            const { type, id, label } = deleteTarget;
-            if (!type || !id) return;
+            const { type, id } = deleteTarget;
+            if (!type || !id || !appState.currentUser) return;
 
             try {
                 if (type === 'commitment') {
                     const docRef = window.FirebaseFirestore.doc(appState.firebaseDB, 'users', appState.currentUser, 'commitments', id);
                     await window.FirebaseFirestore.deleteDoc(docRef);
-                    showNotification(`Removed "${label}" successfully.`);
+                    showNotification("Deleted.");
                 } else if (type === 'savings') {
                     const docRef = window.FirebaseFirestore.doc(appState.firebaseDB, 'users', appState.currentUser, 'savings', id);
                     await window.FirebaseFirestore.deleteDoc(docRef);
-                    showNotification("Savings entry deleted.");
+                    showNotification("Deleted.");
                 }
             } catch (err) {
-                console.error("Deletion error:", err);
-                showNotification("Could not complete delete operation.", "error");
+                console.error("Delete error:", err);
+                showNotification("Failed to delete.", "error");
             }
             closeDeleteModal();
         }
 
-        function closeEditModal() {
-            const modal = document.getElementById("edit-commitment-modal");
-            if (modal) modal.classList.add("hidden");
-        }
-
-        function openSavingsModal() {
-            const modal = document.getElementById("savings-record-modal");
-            if (modal) modal.classList.remove("hidden");
-        }
-        function closeSavingsModal() {
-            const modal = document.getElementById("savings-record-modal");
-            if (modal) modal.classList.add("hidden");
-        }
-
+        function closeEditModal() { document.getElementById("edit-commitment-modal").classList.add("hidden"); }
+        function openSavingsModal() { document.getElementById("savings-record-modal").classList.remove("hidden"); }
+        function closeSavingsModal() { document.getElementById("savings-record-modal").classList.add("hidden"); }
+        function closeDeleteModal() { document.getElementById("delete-confirm-modal").classList.add("hidden"); }
+        
         function triggerSalaryEdit() {
-            const amtElem = document.getElementById("edit-salary-amount");
-            if (amtElem) amtElem.value = appState.salary;
-
-            const modal = document.getElementById("salary-edit-modal");
-            if (modal) modal.classList.remove("hidden");
+            document.getElementById("edit-salary-amount").value = appState.salary;
+            document.getElementById("salary-edit-modal").classList.remove("hidden");
         }
-        function closeSalaryModal() {
-            document.getElementById("salary-edit-modal").classList.add("hidden");
-        }
+        function closeSalaryModal() { document.getElementById("salary-edit-modal").classList.add("hidden"); }
 
-        function formatCurrency(val) {
-            return Number(val).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        }
-
+        function formatCurrency(val) { return Number(val).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
         function formatMonthYear(dateStr) {
             if (!dateStr) return '';
             const [year, month] = dateStr.split('-');
@@ -1433,23 +1075,18 @@
         }
 
         function getCategoryBadgeStyles(cat) {
-            switch(cat) {
-                case 'Transport': return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
-                case 'Housing & Bills': return 'bg-blue-500/10 text-blue-400 border border-blue-500/20';
-                case 'Family': return 'bg-pink-500/10 text-pink-400 border border-pink-500/20';
-                case 'Gadgets': return 'bg-amber-500/10 text-amber-400 border border-amber-500/20';
-                case 'Loans & BNPL': return 'bg-violet-500/10 text-violet-400 border border-violet-500/20';
-                default: return 'bg-slate-500/10 text-slate-400 border border-slate-500/20';
-            }
+            const styles = {
+                'Transport': 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
+                'Housing & Bills': 'bg-blue-500/10 text-blue-400 border border-blue-500/20',
+                'Family': 'bg-pink-500/10 text-pink-400 border border-pink-500/20',
+                'Gadgets': 'bg-amber-500/10 text-amber-400 border border-amber-500/20',
+                'Loans & BNPL': 'bg-violet-500/10 text-violet-400 border border-violet-500/20'
+            };
+            return styles[cat] || 'bg-slate-500/10 text-slate-400 border border-slate-500/20';
         }
 
         function escapeHtml(text) {
-            return text
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
         }
 
         function showNotification(text, type = "success") {
@@ -1458,25 +1095,18 @@
             if (textElem) textElem.innerText = text;
             
             if (bar) {
-                if (type === "error") {
-                    bar.className = "flex items-center justify-between p-3.5 bg-rose-500/10 border border-rose-500/20 text-rose-300 rounded-xl text-xs transition-all";
-                } else {
-                    bar.className = "flex items-center justify-between p-3.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 rounded-xl text-xs transition-all";
-                }
+                bar.className = type === "error" 
+                    ? "flex items-center justify-between p-3.5 bg-rose-500/10 border border-rose-500/20 text-rose-300 rounded-xl text-xs transition-all"
+                    : "flex items-center justify-between p-3.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 rounded-xl text-xs transition-all";
                 bar.classList.remove("hidden");
             }
-            setTimeout(() => {
-                closeNotification();
-            }, 4500);
+            setTimeout(closeNotification, 4500);
         }
 
         function closeNotification() {
             const bar = document.getElementById("notification-bar");
             if (bar) bar.classList.add("hidden");
         }
-
-        // Initialize on page load
-        window.addEventListener('DOMContentLoaded', initializeDatabaseConnection);
     </script>
 </body>
 </html>
