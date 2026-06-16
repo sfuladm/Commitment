@@ -51,17 +51,6 @@
 </head>
 <body class="h-full text-slate-100 flex flex-col justify-between select-none">
 
-    <!-- Firebase SDK Imports -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, collection, query, onSnapshot, addDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        
-        window.FirebaseCore = { initializeApp };
-        window.FirebaseAuth = { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken };
-        window.FirebaseFirestore = { getFirestore, doc, setDoc, getDoc, collection, query, onSnapshot, addDoc, updateDoc, deleteDoc };
-    </script>
-
     <!-- Top Navigation Bar (Optimized for iPhone cutouts & Dynamic Island) -->
     <header class="bg-slate-900/80 backdrop-blur-md border-b border-slate-800/60 sticky top-0 z-40 px-4 py-3 sm:px-6 ios-top-padding">
         <div class="max-w-7xl mx-auto flex items-center justify-between">
@@ -124,7 +113,7 @@
             <!-- Real-time Alerts Notification System -->
             <div id="notification-bar" class="hidden flex items-center justify-between p-3.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 rounded-xl text-xs transition-all">
                 <span class="flex items-center gap-2"><i class="fa-solid fa-circle-check"></i> <span id="notification-text">Action succeeded.</span></span>
-                <button onclick="closeNotification()" class="hover:text-white transition p-1"><i class="fa-solid fa-xmark text-sm"></i></button>
+                <button id="close-notification-btn" class="hover:text-white transition p-1"><i class="fa-solid fa-xmark text-sm"></i></button>
             </div>
 
             <!-- UNIFIED TOP LEVEL STATS -->
@@ -133,7 +122,7 @@
                 <div class="bg-slate-900/60 border border-slate-800/40 rounded-2xl p-4 shadow-sm">
                     <div class="flex items-center justify-between">
                         <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Salary</span>
-                        <button onclick="triggerSalaryEdit()" class="text-emerald-400 text-xs font-semibold">
+                        <button id="edit-salary-trigger-btn" class="text-emerald-400 text-xs font-semibold p-1 hover:bg-slate-800 rounded-lg transition">
                             <i class="fa-solid fa-pen-to-square"></i>
                         </button>
                     </div>
@@ -151,6 +140,10 @@
                     <div class="mt-1 flex items-baseline gap-0.5">
                         <span class="text-slate-400 text-xs font-semibold">RM</span>
                         <span id="commit-val-display" class="text-base font-extrabold text-rose-400">0.00</span>
+                    </div>
+                    <div class="mt-1.5 pt-1.5 border-t border-slate-800/40 flex justify-between text-[9px] text-slate-500">
+                        <span>Paid: <span id="outflow-paid-display" class="font-bold text-emerald-400">RM 0.00</span></span>
+                        <span id="outflow-paid-ratio" class="font-bold text-slate-400">0/0 paid</span>
                     </div>
                 </div>
                 <!-- Savings -->
@@ -205,9 +198,9 @@
                                     <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500 text-xs">
                                         <i class="fa-solid fa-magnifying-glass"></i>
                                     </span>
-                                    <input type="text" id="search-input-mob" oninput="renderApp()" placeholder="Search items..." class="w-full h-11 pl-8 pr-3 bg-slate-950 border border-slate-800 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500 text-slate-200">
+                                    <input type="text" id="search-input-mob" placeholder="Search items..." class="w-full h-11 pl-8 pr-3 bg-slate-950 border border-slate-800 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500 text-slate-200">
                                 </div>
-                                <select id="filter-category-mob" onchange="renderApp()" class="bg-slate-950 border border-slate-800 rounded-xl text-xs px-2.5 h-11 focus:ring-1 focus:ring-emerald-500 text-slate-300">
+                                <select id="filter-category-mob" class="bg-slate-950 border border-slate-800 rounded-xl text-xs px-2.5 h-11 focus:ring-1 focus:ring-emerald-500 text-slate-300">
                                     <option value="All">All</option>
                                     <option value="Transport">Transport</option>
                                     <option value="Housing & Bills">Housing & Bills</option>
@@ -236,7 +229,7 @@
                                 </h3>
                                 <p class="text-[10px] text-slate-400 mt-0.5">View your physical savings trends.</p>
                             </div>
-                            <button onclick="openSavingsModal()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 active:scale-95 transition text-xs font-extrabold px-3 py-2 rounded-xl flex items-center gap-1.5 h-9">
+                            <button id="mobile-record-savings-btn" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 active:scale-95 transition text-xs font-extrabold px-3 py-2 rounded-xl flex items-center gap-1.5 h-9">
                                 <i class="fa-solid fa-plus"></i> Record
                             </button>
                         </div>
@@ -306,9 +299,9 @@
                                     <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500 text-xs">
                                         <i class="fa-solid fa-magnifying-glass"></i>
                                     </span>
-                                    <input type="text" id="search-input" oninput="renderApp()" placeholder="Search items..." class="w-48 pl-8 pr-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500 text-slate-200 transition">
+                                    <input type="text" id="search-input" placeholder="Search items..." class="w-48 pl-8 pr-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500 text-slate-200 transition">
                                 </div>
-                                <select id="filter-category" onchange="renderApp()" class="bg-slate-950 border border-slate-800 rounded-xl text-xs px-2.5 py-1.5 focus:ring-1 focus:ring-emerald-500 text-slate-300">
+                                <select id="filter-category" class="bg-slate-950 border border-slate-800 rounded-xl text-xs px-2.5 py-1.5 focus:ring-1 focus:ring-emerald-500 text-slate-300">
                                     <option value="All">All Sectors</option>
                                     <option value="Transport">Transport</option>
                                     <option value="Housing & Bills">Housing & Bills</option>
@@ -325,6 +318,7 @@
                             <table class="w-full text-left border-collapse">
                                 <thead>
                                     <tr class="bg-slate-950/50 border-b border-slate-800/40 text-[10px] font-bold tracking-wider text-slate-400 uppercase">
+                                        <th class="px-5 py-3 text-center w-16">Status</th>
                                         <th class="px-5 py-3">Category</th>
                                         <th class="px-5 py-3">Item / Description</th>
                                         <th class="px-5 py-3 text-right">Monthly (RM)</th>
@@ -357,7 +351,7 @@
                                     </h3>
                                     <p class="text-xs text-slate-400 mt-0.5">Track actual savings amounts synced securely in real-time.</p>
                                 </div>
-                                <button onclick="openSavingsModal()" class="bg-emerald-500/10 hover:bg-emerald-500 hover:text-slate-950 text-emerald-400 transition text-xs font-bold px-3 py-1.5 rounded-xl flex items-center gap-1.5 border border-emerald-500/20">
+                                <button id="desktop-record-savings-btn" class="bg-emerald-500/10 hover:bg-emerald-500 hover:text-slate-950 text-emerald-400 transition text-xs font-bold px-3 py-1.5 rounded-xl flex items-center gap-1.5 border border-emerald-500/20">
                                     <i class="fa-solid fa-plus"></i> Record Savings
                                 </button>
                             </div>
@@ -442,19 +436,19 @@
 
     <!-- Sticky Bottom Navigation Bar (ONLY Visible on Mobile Viewports, Thumb-Optimized) -->
     <nav class="lg:hidden fixed bottom-0 inset-x-0 bg-slate-900/90 backdrop-blur-md border-t border-slate-800/60 flex justify-around items-center py-2 px-3 z-50 shadow-2xl ios-bottom-padding">
-        <button onclick="switchMobileTab('overview')" id="nav-tab-overview" class="flex flex-col items-center gap-1 py-1 px-3 text-emerald-400 transition active:scale-95">
+        <button id="nav-tab-overview" class="flex flex-col items-center gap-1 py-1 px-3 text-emerald-400 transition active:scale-95">
             <i class="fa-solid fa-chart-pie text-lg"></i>
             <span class="text-[9px] font-bold tracking-wide">Overview</span>
         </button>
-        <button onclick="switchMobileTab('directory')" id="nav-tab-directory" class="flex flex-col items-center gap-1 py-1 px-3 text-slate-400 transition active:scale-95">
+        <button id="nav-tab-directory" class="flex flex-col items-center gap-1 py-1 px-3 text-slate-400 transition active:scale-95">
             <i class="fa-solid fa-list-ul text-lg"></i>
             <span class="text-[9px] font-bold tracking-wide">Directory</span>
         </button>
-        <button onclick="switchMobileTab('vault')" id="nav-tab-vault" class="flex flex-col items-center gap-1 py-1 px-3 text-slate-400 transition active:scale-95">
+        <button id="nav-tab-vault" class="flex flex-col items-center gap-1 py-1 px-3 text-slate-400 transition active:scale-95">
             <i class="fa-solid fa-piggy-bank text-lg"></i>
             <span class="text-[9px] font-bold tracking-wide">Savings</span>
         </button>
-        <button onclick="switchMobileTab('actions')" id="nav-tab-actions" class="flex flex-col items-center gap-1 py-1 px-3 text-slate-400 transition active:scale-95">
+        <button id="nav-tab-actions" class="flex flex-col items-center gap-1 py-1 px-3 text-slate-400 transition active:scale-95">
             <i class="fa-solid fa-circle-plus text-lg"></i>
             <span class="text-[9px] font-bold tracking-wide">Add</span>
         </button>
@@ -475,7 +469,7 @@
                 <h3 class="text-sm font-extrabold text-white flex items-center gap-1.5">
                     <i class="fa-solid fa-pen-to-square text-emerald-400"></i> Edit Commitment
                 </h3>
-                <button onclick="closeEditModal()" class="text-slate-400 hover:text-white p-1 transition"><i class="fa-solid fa-xmark text-lg"></i></button>
+                <button id="close-edit-modal-btn" class="text-slate-400 hover:text-white p-1 transition"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <form id="edit-commitment-form" class="p-5 space-y-4">
                 <input type="hidden" id="edit-id">
@@ -499,7 +493,7 @@
                     <input type="number" step="0.01" id="edit-amount" required class="w-full h-11 px-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200">
                 </div>
                 <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" onclick="closeEditModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold px-4 h-10 rounded-xl transition">Cancel</button>
+                    <button type="button" id="cancel-edit-modal-btn" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold px-4 h-10 rounded-xl transition">Cancel</button>
                     <button type="submit" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-extrabold px-4 h-10 rounded-xl transition">Apply Edits</button>
                 </div>
             </form>
@@ -513,7 +507,7 @@
                 <h3 class="text-sm font-extrabold text-white flex items-center gap-1.5">
                     <i class="fa-solid fa-piggy-bank text-emerald-400"></i> Record Monthly Savings
                 </h3>
-                <button onclick="closeSavingsModal()" class="text-slate-400 hover:text-white p-1 transition"><i class="fa-solid fa-xmark text-lg"></i></button>
+                <button id="close-savings-modal-btn" class="text-slate-400 hover:text-white p-1 transition"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <form id="savings-record-form" class="p-5 space-y-4">
                 <div>
@@ -529,7 +523,7 @@
                     <input type="number" step="0.01" id="savings-amount" placeholder="0.00" required class="w-full h-11 px-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200">
                 </div>
                 <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" onclick="closeSavingsModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold px-4 h-10 rounded-xl transition">Cancel</button>
+                    <button type="button" id="cancel-savings-modal-btn" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold px-4 h-10 rounded-xl transition">Cancel</button>
                     <button type="submit" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-extrabold px-4 h-10 rounded-xl transition">Save Log</button>
                 </div>
             </form>
@@ -538,12 +532,12 @@
 
     <!-- MODAL: Edit Salary -->
     <div id="salary-edit-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-sm w-full overflow-hidden shadow-2xl">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl max-sm w-full overflow-hidden shadow-2xl">
             <div class="px-5 py-4 border-b border-slate-800/80 flex justify-between items-center">
                 <h3 class="text-sm font-extrabold text-white flex items-center gap-1.5">
                     <i class="fa-solid fa-coins text-emerald-400"></i> Edit Base Salary
                 </h3>
-                <button onclick="closeSalaryModal()" class="text-slate-400 hover:text-white p-1 transition"><i class="fa-solid fa-xmark text-lg"></i></button>
+                <button id="close-salary-modal-btn" class="text-slate-400 hover:text-white p-1 transition"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <form id="salary-edit-form" class="p-5 space-y-4">
                 <div>
@@ -551,7 +545,7 @@
                     <input type="number" step="0.01" id="edit-salary-amount" required class="w-full h-11 px-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200">
                 </div>
                 <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" onclick="closeSalaryModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold px-4 h-10 rounded-xl transition">Cancel</button>
+                    <button type="button" id="cancel-salary-modal-btn" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold px-4 h-10 rounded-xl transition">Cancel</button>
                     <button type="submit" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-extrabold px-4 h-10 rounded-xl transition">Update</button>
                 </div>
             </form>
@@ -570,7 +564,7 @@
                     <p id="delete-modal-msg" class="text-xs text-slate-400 leading-relaxed">Are you sure you want to permanently delete this record? This action cannot be undone.</p>
                 </div>
                 <div class="flex flex-col sm:flex-row gap-2 justify-center pt-2 w-full">
-                    <button onclick="closeDeleteModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold py-3 px-4 rounded-xl transition order-2 sm:order-1 sm:flex-1">Cancel</button>
+                    <button id="cancel-delete-modal-btn" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold py-3 px-4 rounded-xl transition order-2 sm:order-1 sm:flex-1">Cancel</button>
                     <button id="delete-modal-confirm-btn" class="bg-rose-500 hover:bg-rose-400 text-white text-xs font-bold py-3 px-4 rounded-xl transition order-1 sm:order-2 sm:flex-1">Delete Record</button>
                 </div>
             </div>
@@ -578,7 +572,12 @@
     </div>
 
     <!-- CORE APPLICATION LOGIC & DATABASE ENGINE -->
-    <script>
+    <!-- Consolidating all dependencies inside type="module" to prevent DOM race condition errors -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, query, onSnapshot, addDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
         // STRICT FIREBASE CONFIGURATION
         const firebaseConfig = {
             apiKey: "AIzaSyB3HV2fLQDqAZQoAMq_Ava2hjPNAmqJ23s",
@@ -610,8 +609,22 @@
         let chartInstanceDesk = null;
         let chartInstanceMob = null;
 
-        // On Load initialization
-        window.addEventListener('load', () => {
+        // Make functions globally available for dynamic HTML onclick events
+        window.switchMobileTab = switchMobileTab;
+        window.triggerEdit = triggerEdit;
+        window.triggerDelete = triggerDelete;
+        window.triggerDeleteSavings = triggerDeleteSavings;
+        window.closeEditModal = closeEditModal;
+        window.closeSavingsModal = closeSavingsModal;
+        window.closeSalaryModal = closeSalaryModal;
+        window.closeDeleteModal = closeDeleteModal;
+        window.openSavingsModal = openSavingsModal;
+        window.triggerSalaryEdit = triggerSalaryEdit;
+        window.renderApp = renderApp;
+        window.togglePaidStatus = togglePaidStatus;
+
+        // Initialize App on load
+        window.addEventListener('DOMContentLoaded', () => {
             setupEventListeners();
             initCharts();
             switchMobileTab('overview');
@@ -633,21 +646,21 @@
                     badge.innerHTML = `<span class="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse"></span> Connecting Cloud`;
                 }
 
-                const app = window.FirebaseCore.initializeApp(firebaseConfig);
-                const auth = window.FirebaseAuth.getAuth(app);
-                const db = window.FirebaseFirestore.getFirestore(app);
+                const app = initializeApp(firebaseConfig);
+                const auth = getAuth(app);
+                const db = getFirestore(app);
                 
                 appState.firebaseApp = app;
                 appState.firebaseAuth = auth;
                 appState.firebaseDB = db;
 
-                // RULE 3: Auth Before Queries
+                // RULE 3: Auth Before Queries (Prioritize Custom Token and wait for resolution)
                 let user;
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    const credential = await window.FirebaseAuth.signInWithCustomToken(auth, __initial_auth_token);
+                    const credential = await signInWithCustomToken(auth, __initial_auth_token);
                     user = credential.user;
                 } else {
-                    const credential = await window.FirebaseAuth.signInAnonymously(auth);
+                    const credential = await signInAnonymously(auth);
                     user = credential.user;
                 }
                 appState.user = user;
@@ -657,11 +670,11 @@
                     badge.innerHTML = `<span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span> Online Synced`;
                 }
 
-                // Verify base configurations and initialize real-time sync listeners
+                // Verify configurations and start state listeners
                 await ensureSalaryInitialized(db, user.uid);
                 bindFirestoreRealtimeListeners(db, user.uid);
 
-                // Clear login screen overlay
+                // Open Authenticated view
                 appState.authenticated = true;
                 document.getElementById("auth-wall").classList.add("hidden");
                 document.getElementById("dashboard-panel").classList.remove("hidden");
@@ -682,14 +695,14 @@
             }
         }
 
-        // Verification check to initialize default configuration variables in the database
+        // Rule 1 compliant verification for base setting config
         async function ensureSalaryInitialized(db, uid) {
             const appId = typeof __app_id !== 'undefined' ? __app_id : 'commitment-tracker-d78a4';
-            const settingsDocRef = window.FirebaseFirestore.doc(db, 'artifacts', appId, 'users', uid, 'settings', 'salary');
-            const salarySnap = await window.FirebaseFirestore.getDoc(settingsDocRef);
+            const settingsDocRef = doc(db, 'artifacts', appId, 'users', uid, 'settings', 'salary');
+            const salarySnap = await getDoc(settingsDocRef);
             
             if (!salarySnap.exists()) {
-                await window.FirebaseFirestore.setDoc(settingsDocRef, { salary: 6500.00 });
+                await setDoc(settingsDocRef, { salary: 6500.00 });
                 appState.salary = 6500.00;
             } else {
                 appState.salary = parseFloat(salarySnap.data().salary) || 6500.00;
@@ -701,8 +714,8 @@
             const appId = typeof __app_id !== 'undefined' ? __app_id : 'commitment-tracker-d78a4';
             
             // Track base salary changes
-            const settingsDocRef = window.FirebaseFirestore.doc(db, 'artifacts', appId, 'users', uid, 'settings', 'salary');
-            window.FirebaseFirestore.onSnapshot(settingsDocRef, (docSnap) => {
+            const settingsDocRef = doc(db, 'artifacts', appId, 'users', uid, 'settings', 'salary');
+            onSnapshot(settingsDocRef, (docSnap) => {
                 if (docSnap.exists()) {
                     appState.salary = parseFloat(docSnap.data().salary) || 6500.00;
                     renderApp();
@@ -712,8 +725,8 @@
             });
 
             // Sync Commitments
-            const commitmentsRef = window.FirebaseFirestore.collection(db, 'artifacts', appId, 'users', uid, 'commitments');
-            window.FirebaseFirestore.onSnapshot(commitmentsRef, (snapshot) => {
+            const commitmentsRef = collection(db, 'artifacts', appId, 'users', uid, 'commitments');
+            onSnapshot(commitmentsRef, (snapshot) => {
                 const loaded = [];
                 snapshot.forEach(doc => {
                     loaded.push({ id: doc.id, ...doc.data() });
@@ -725,8 +738,8 @@
             });
 
             // Sync Savings Logs
-            const savingsRef = window.FirebaseFirestore.collection(db, 'artifacts', appId, 'users', uid, 'savings');
-            window.FirebaseFirestore.onSnapshot(savingsRef, (snapshot) => {
+            const savingsRef = collection(db, 'artifacts', appId, 'users', uid, 'savings');
+            onSnapshot(savingsRef, (snapshot) => {
                 const loaded = [];
                 snapshot.forEach(doc => {
                     loaded.push({ id: doc.id, ...doc.data() });
@@ -785,6 +798,65 @@
                 });
             }
 
+            // Navigation tabs on mobile
+            const navTabs = ['overview', 'directory', 'vault', 'actions'];
+            navTabs.forEach(tab => {
+                const tabBtn = document.getElementById(`nav-tab-${tab}`);
+                if (tabBtn) {
+                    tabBtn.addEventListener('click', () => switchMobileTab(tab));
+                }
+            });
+
+            // Desktop Search and Filter triggers
+            const searchInputDesk = document.getElementById("search-input");
+            if (searchInputDesk) searchInputDesk.addEventListener("input", renderApp);
+
+            const filterCatDesk = document.getElementById("filter-category");
+            if (filterCatDesk) filterCatDesk.addEventListener("change", renderApp);
+
+            // Mobile Search and Filter triggers
+            const searchInputMob = document.getElementById("search-input-mob");
+            if (searchInputMob) searchInputMob.addEventListener("input", renderApp);
+
+            const filterCatMob = document.getElementById("filter-category-mob");
+            if (filterCatMob) filterCatMob.addEventListener("change", renderApp);
+
+            // Record savings trigger buttons
+            const mobRecBtn = document.getElementById("mobile-record-savings-btn");
+            if (mobRecBtn) mobRecBtn.addEventListener("click", openSavingsModal);
+
+            const deskRecBtn = document.getElementById("desktop-record-savings-btn");
+            if (deskRecBtn) deskRecBtn.addEventListener("click", openSavingsModal);
+
+            const salEditBtn = document.getElementById("edit-salary-trigger-btn");
+            if (salEditBtn) salEditBtn.addEventListener("click", triggerSalaryEdit);
+
+            // Close notification
+            const closeNotifBtn = document.getElementById("close-notification-btn");
+            if (closeNotifBtn) closeNotifBtn.addEventListener("click", closeNotification);
+
+            // Close Modal bindings
+            const cancelEditBtn = document.getElementById("cancel-edit-modal-btn");
+            if (cancelEditBtn) cancelEditBtn.addEventListener("click", closeEditModal);
+
+            const closeEditBtn = document.getElementById("close-edit-modal-btn");
+            if (closeEditBtn) closeEditBtn.addEventListener("click", closeEditModal);
+
+            const cancelSavingsBtn = document.getElementById("cancel-savings-modal-btn");
+            if (cancelSavingsBtn) cancelSavingsBtn.addEventListener("click", closeSavingsModal);
+
+            const closeSavingsBtn = document.getElementById("close-savings-modal-btn");
+            if (closeSavingsBtn) closeSavingsBtn.addEventListener("click", closeSavingsModal);
+
+            const cancelSalaryBtn = document.getElementById("cancel-salary-modal-btn");
+            if (cancelSalaryBtn) cancelSalaryBtn.addEventListener("click", closeSalaryModal);
+
+            const closeSalaryBtn = document.getElementById("close-salary-modal-btn");
+            if (closeSalaryBtn) closeSalaryBtn.addEventListener("click", closeSalaryModal);
+
+            const cancelDelBtn = document.getElementById("cancel-delete-modal-btn");
+            if (cancelDelBtn) cancelDelBtn.addEventListener("click", closeDeleteModal);
+
             // Closes session, wipes keys out of state
             const logoutBtn = document.getElementById("logout-btn");
             if (logoutBtn) {
@@ -828,12 +900,12 @@
 
                 if (!item || isNaN(amount)) return;
 
-                const payload = { category, item, amount };
+                const payload = { category, item, amount, paid: false };
 
                 try {
                     const appId = typeof __app_id !== 'undefined' ? __app_id : 'commitment-tracker-d78a4';
-                    const colRef = window.FirebaseFirestore.collection(appState.firebaseDB, 'artifacts', appId, 'users', appState.user.uid, 'commitments');
-                    await window.FirebaseFirestore.addDoc(colRef, payload);
+                    const colRef = collection(appState.firebaseDB, 'artifacts', appId, 'users', appState.user.uid, 'commitments');
+                    await addDoc(colRef, payload);
                     
                     if (itemElem) itemElem.value = "";
                     if (amtElem) amtElem.value = "";
@@ -865,8 +937,8 @@
 
                     try {
                         const appId = typeof __app_id !== 'undefined' ? __app_id : 'commitment-tracker-d78a4';
-                        const docRef = window.FirebaseFirestore.doc(appState.firebaseDB, 'artifacts', appId, 'users', appState.user.uid, 'commitments', id);
-                        await window.FirebaseFirestore.updateDoc(docRef, { category, item, amount });
+                        const docRef = doc(appState.firebaseDB, 'artifacts', appId, 'users', appState.user.uid, 'commitments', id);
+                        await updateDoc(docRef, { category, item, amount });
                         closeEditModal();
                         showNotification("Commitment revised.");
                     } catch (err) {
@@ -893,8 +965,8 @@
 
                     try {
                         const appId = typeof __app_id !== 'undefined' ? __app_id : 'commitment-tracker-d78a4';
-                        const colRef = window.FirebaseFirestore.collection(appState.firebaseDB, 'artifacts', appId, 'users', appState.user.uid, 'savings');
-                        await window.FirebaseFirestore.addDoc(colRef, payload);
+                        const colRef = collection(appState.firebaseDB, 'artifacts', appId, 'users', appState.user.uid, 'savings');
+                        await addDoc(colRef, payload);
                         
                         if (monthVal) monthVal.value = "";
                         if (noteVal) noteVal.value = "";
@@ -921,8 +993,8 @@
 
                     try {
                         const appId = typeof __app_id !== 'undefined' ? __app_id : 'commitment-tracker-d78a4';
-                        const docRef = window.FirebaseFirestore.doc(appState.firebaseDB, 'artifacts', appId, 'users', appState.user.uid, 'settings', 'salary');
-                        await window.FirebaseFirestore.setDoc(docRef, { salary: amt });
+                        const docRef = doc(appState.firebaseDB, 'artifacts', appId, 'users', appState.user.uid, 'settings', 'salary');
+                        await setDoc(docRef, { salary: amt });
                         closeSalaryModal();
                         showNotification("Base salary updated.");
                     } catch (err) {
@@ -940,6 +1012,10 @@
         // Render application interface
         function renderApp() {
             const totalCommitments = appState.commitments.reduce((sum, item) => sum + Number(item.amount), 0);
+            const paidCommitments = appState.commitments.filter(c => c.paid);
+            const totalPaidAmount = paidCommitments.reduce((sum, item) => sum + Number(item.amount), 0);
+            const paidCount = paidCommitments.length;
+            const totalCount = appState.commitments.length;
             
             const sortedSavings = [...appState.savings].sort((a,b) => b.month.localeCompare(a.month));
             const latestSavingsAmount = sortedSavings.length > 0 ? Number(sortedSavings[0].amount) : 0;
@@ -952,12 +1028,16 @@
                 savings: document.getElementById("savings-val-display"),
                 disposable: document.getElementById("disposable-val-display"),
                 commitPct: document.getElementById("commit-percentage"),
-                savingsPct: document.getElementById("savings-percentage")
+                savingsPct: document.getElementById("savings-percentage"),
+                paidDisplay: document.getElementById("outflow-paid-display"),
+                paidRatio: document.getElementById("outflow-paid-ratio")
             };
 
             if (elements.salary) elements.salary.innerText = formatCurrency(appState.salary);
             if (elements.commit) elements.commit.innerText = formatCurrency(totalCommitments);
             if (elements.savings) elements.savings.innerText = formatCurrency(latestSavingsAmount);
+            if (elements.paidDisplay) elements.paidDisplay.innerText = "RM " + formatCurrency(totalPaidAmount);
+            if (elements.paidRatio) elements.paidRatio.innerText = `${paidCount}/${totalCount} paid`;
             
             if (elements.disposable) {
                 elements.disposable.innerText = formatCurrency(disposableIncome);
@@ -996,15 +1076,24 @@
                 } else {
                     if (emptyState) emptyState.classList.add("hidden");
                     filteredCommitments.forEach(item => {
+                        const isPaid = !!item.paid;
                         const tr = document.createElement("tr");
-                        tr.className = "hover:bg-slate-900/40 transition group border-b border-slate-900/40";
+                        tr.className = `hover:bg-slate-900/40 transition group border-b border-slate-900/40 ${isPaid ? 'opacity-60' : ''}`;
                         tr.innerHTML = `
+                            <td class="px-5 py-3.5 text-center">
+                                <button onclick="togglePaidStatus('${item.id}', ${isPaid})" class="focus:outline-none p-1 transition transform active:scale-95">
+                                    ${isPaid ? 
+                                        '<i class="fa-solid fa-circle-check text-emerald-400 text-base"></i>' : 
+                                        '<i class="fa-regular fa-circle text-slate-600 hover:text-slate-400 text-base"></i>'
+                                    }
+                                </button>
+                            </td>
                             <td class="px-5 py-3.5 font-medium">
                                 <span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${getCategoryBadgeStyles(item.category)}">
                                     ${item.category}
                                 </span>
                             </td>
-                            <td class="px-5 py-3.5 text-slate-300 font-semibold">${escapeHtml(item.item)}</td>
+                            <td class="px-5 py-3.5 text-slate-300 font-semibold ${isPaid ? 'line-through text-slate-500' : ''}">${escapeHtml(item.item)}</td>
                             <td class="px-5 py-3.5 text-right font-mono text-slate-200 font-extrabold">RM ${formatCurrency(item.amount)}</td>
                             <td class="px-5 py-3.5 text-center whitespace-nowrap">
                                 <div class="flex items-center justify-center gap-1.5">
@@ -1047,16 +1136,25 @@
                     `;
                 } else {
                     mobFilteredCommitments.forEach(item => {
+                        const isPaid = !!item.paid;
                         const card = document.createElement("div");
-                        card.className = "bg-slate-950/60 border border-slate-900 rounded-2xl p-3.5 flex justify-between items-center gap-2";
+                        card.className = `bg-slate-950/60 border border-slate-900 rounded-2xl p-3.5 flex justify-between items-center gap-2 transition ${isPaid ? 'opacity-65' : ''}`;
                         card.innerHTML = `
-                            <div class="space-y-1 overflow-hidden min-w-0">
-                                <div class="flex items-center gap-1.5">
-                                    <span class="px-2 py-0.5 rounded-full text-[9px] font-bold ${getCategoryBadgeStyles(item.category)} leading-none block">
-                                        ${item.category}
-                                    </span>
+                            <div class="flex items-center gap-3 min-w-0 flex-1">
+                                <button onclick="togglePaidStatus('${item.id}', ${isPaid})" class="shrink-0 focus:outline-none p-1 transition transform active:scale-95">
+                                    ${isPaid ?
+                                        '<i class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>' :
+                                        '<i class="fa-regular fa-circle text-slate-600 hover:text-slate-400 text-lg"></i>'
+                                    }
+                                </button>
+                                <div class="space-y-1 overflow-hidden min-w-0">
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="px-2 py-0.5 rounded-full text-[9px] font-bold ${getCategoryBadgeStyles(item.category)} leading-none block">
+                                            ${item.category}
+                                        </span>
+                                    </div>
+                                    <h4 class="text-xs font-bold ${isPaid ? 'text-slate-500 line-through' : 'text-slate-200'} truncate leading-tight">${escapeHtml(item.item)}</h4>
                                 </div>
-                                <h4 class="text-xs font-bold text-slate-200 truncate leading-tight">${escapeHtml(item.item)}</h4>
                             </div>
                             <div class="flex items-center gap-2.5 shrink-0">
                                 <div class="text-right">
@@ -1261,6 +1359,18 @@
             if (modal) modal.classList.remove("hidden");
         }
 
+        async function togglePaidStatus(id, currentStatus) {
+            try {
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'commitment-tracker-d78a4';
+                const docRef = doc(appState.firebaseDB, 'artifacts', appId, 'users', appState.user.uid, 'commitments', id);
+                await updateDoc(docRef, { paid: !currentStatus });
+                showNotification(!currentStatus ? "Marked as paid." : "Marked as unpaid.");
+            } catch (err) {
+                console.error("Error toggling paid status:", err);
+                showNotification("Could not update status.", "error");
+            }
+        }
+
         function closeDeleteModal() {
             const modal = document.getElementById("delete-confirm-modal");
             if (modal) modal.classList.add("hidden");
@@ -1273,12 +1383,12 @@
             try {
                 const appId = typeof __app_id !== 'undefined' ? __app_id : 'commitment-tracker-d78a4';
                 if (type === 'commitment') {
-                    const docRef = window.FirebaseFirestore.doc(appState.firebaseDB, 'artifacts', appId, 'users', appState.user.uid, 'commitments', id);
-                    await window.FirebaseFirestore.deleteDoc(docRef);
+                    const docRef = doc(appState.firebaseDB, 'artifacts', appId, 'users', appState.user.uid, 'commitments', id);
+                    await deleteDoc(docRef);
                     showNotification(`Removed "${label}" successfully.`);
                 } else if (type === 'savings') {
-                    const docRef = window.FirebaseFirestore.doc(appState.firebaseDB, 'artifacts', appId, 'users', appState.user.uid, 'savings', id);
-                    await window.FirebaseFirestore.deleteDoc(docRef);
+                    const docRef = doc(appState.firebaseDB, 'artifacts', appId, 'users', appState.user.uid, 'savings', id);
+                    await deleteDoc(docRef);
                     showNotification("Savings entry deleted.");
                 }
             } catch (err) {
