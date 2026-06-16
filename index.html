@@ -51,7 +51,7 @@
 </head>
 <body class="h-full text-slate-100 flex flex-col justify-between select-none">
 
-    <!-- Top Navigation Bar (Optimized for iPhone cutouts & Dynamic Island) -->
+    <!-- Top Navigation Bar -->
     <header class="bg-slate-900/80 backdrop-blur-md border-b border-slate-800/60 sticky top-0 z-40 px-4 py-3 sm:px-6 ios-top-padding">
         <div class="max-w-7xl mx-auto flex items-center justify-between">
             <div class="flex items-center space-x-2.5">
@@ -111,7 +111,7 @@
                     <span>Sync & Unlock</span> <i class="fa-solid fa-arrow-right text-xs"></i>
                 </button>
                 <div class="text-center text-[10px] text-slate-500 mt-4 leading-relaxed bg-slate-950/40 p-2.5 rounded-xl border border-slate-900">
-                    <span class="text-emerald-400 font-semibold">New to Vault?</span> Just enter any unique ID and password. It will register automatically!
+                    <span class="text-emerald-400 font-semibold">New Workspace?</span> Simply enter a new Vault ID and Password, and your vault will initialize instantly!
                 </div>
             </form>
         </div>
@@ -573,11 +573,20 @@
     </div>
 
     <!-- CORE APPLICATION LOGIC & DATABASE ENGINE -->
-    <!-- Consolidating all dependencies inside type="module" to prevent DOM race condition errors -->
     <script type="module">
         import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, collection, query, onSnapshot, addDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // STRICT FIREBASE CONFIGURATION
+        const firebaseConfig = {
+            apiKey: "AIzaSyB3HV2fLQDqAZQoAMq_Ava2hjPNAmqJ23s",
+            authDomain: "commitment-tracker-d78a4.firebaseapp.com",
+            projectId: "commitment-tracker-d78a4",
+            storageBucket: "commitment-tracker-d78a4.firebasestorage.app",
+            messagingSenderId: "251775961082",
+            appId: "1:251775961082:web:14d22c0e944557a5e30643"
+        };
 
         let appState = {
             authenticated: false,
@@ -587,8 +596,9 @@
             firebaseApp: null,
             firebaseDB: null,
             firebaseAuth: null,
-            user: null, // Holds anonymous firebase auth session user
-            userProfileId: "", // Custom sync ID entered by user at login
+            user: null, 
+            userProfileId: "", // Currently active custom Vault ID
+            storageMode: "cloud-shared", // "cloud-shared" or "local"
             currentMobileTab: "overview"
         };
 
@@ -615,13 +625,13 @@
         window.renderApp = renderApp;
         window.togglePaidStatus = togglePaidStatus;
 
-        // Initialize App on load
+        // Initialize App on DOM load
         window.addEventListener('DOMContentLoaded', async () => {
             setupEventListeners();
             initCharts();
             switchMobileTab('overview');
             
-            // RULE 3: Perform background database connection instantly so we are authenticated before any form queries run.
+            // Warm up Firebase connection
             await runBackgroundAuth();
         });
 
@@ -632,7 +642,6 @@
             initPromise = (async () => {
                 const badge = document.getElementById("db-status-badge");
                 try {
-                    // Prevent duplicate app runtime errors by using getApps() safeguard
                     const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
                     const auth = getAuth(app);
                     const db = getFirestore(app);
@@ -641,11 +650,16 @@
                     appState.firebaseAuth = auth;
                     appState.firebaseDB = db;
 
-                    // Priority Custom Token/Anonymous Session to authenticate
                     let tempUser;
                     if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                        const credential = await signInWithCustomToken(auth, __initial_auth_token);
-                        tempUser = credential.user;
+                        try {
+                            const credential = await signInWithCustomToken(auth, __initial_auth_token);
+                            tempUser = credential.user;
+                        } catch (customTokenErr) {
+                            console.warn("Custom token authentication failed. Falling back to anonymous login.", customTokenErr);
+                            const credential = await signInAnonymously(auth);
+                            tempUser = credential.user;
+                        }
                     } else {
                         const credential = await signInAnonymously(auth);
                         tempUser = credential.user;
@@ -657,7 +671,7 @@
                         badge.innerHTML = `<span class="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse"></span> Vault Locked`;
                     }
                 } catch (err) {
-                    console.error("Background auth load exception:", err);
+                    console.error("Background authentication failed:", err);
                     if (badge) {
                         badge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20";
                         badge.innerHTML = `<span class="h-1.5 w-1.5 rounded-full bg-rose-400"></span> Offline Sync Mode`;
@@ -668,32 +682,31 @@
             return initPromise;
         }
 
-        // Database authentication connection and credential verification
         async function verifyVaultWorkspace(customId, password) {
             const badge = document.getElementById("db-status-badge");
             const unlockBtn = document.getElementById("unlock-btn");
             
             if (unlockBtn) {
                 unlockBtn.disabled = true;
-                unlockBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Checking Database...`;
+                unlockBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Authenticating...`;
             }
 
             try {
-                // Confirm background auth completed, fallback load if missing
                 await runBackgroundAuth();
 
                 const db = appState.firebaseDB;
                 const appId = typeof __app_id !== 'undefined' ? __app_id : 'commitment-tracker-d78a4';
                 
-                // Rule 1: Point to user path config schema
-                const authDocRef = doc(db, 'artifacts', appId, 'users', customId, 'settings', 'auth');
-                const authSnap = await getDoc(authDocRef);
+                // Rule 1 Public document reference for shared Vault profile
+                const vaultDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'vaults', customId);
+                const vaultSnap = await getDoc(vaultDocRef);
 
-                if (authSnap.exists()) {
-                    // Password comparison as normal info check
-                    const storedPassword = authSnap.data().password;
+                if (vaultSnap.exists()) {
+                    // Vault exists: Verify stored password
+                    const storedPassword = vaultSnap.data().password;
                     if (storedPassword === password) {
                         appState.userProfileId = customId;
+                        appState.storageMode = 'cloud-shared';
                         await completeLoginAndBind();
                     } else {
                         showNotification("Incorrect password for this Vault ID.", "error");
@@ -703,24 +716,39 @@
                         }
                     }
                 } else {
-                    // Autocreate the workspace profile securely with credentials provided
-                    await setDoc(authDocRef, { password: password });
+                    // Vault DOES NOT exist: AUTO-CREATE new Workspace instantly
+                    await setDoc(vaultDocRef, { 
+                        password: password,
+                        salary: 6500.00
+                    });
                     appState.userProfileId = customId;
-                    showNotification(`Registered new secure vault for "${customId}" successfully.`);
+                    appState.storageMode = 'cloud-shared';
+                    showNotification(`New workspace registered successfully for "${customId}".`);
                     await completeLoginAndBind();
                 }
 
             } catch (err) {
-                console.error("Firestore unlock verification error:", err);
-                showNotification("Could not authenticate. Check network / workspace ID.", "error");
-                if (unlockBtn) {
-                    unlockBtn.disabled = false;
-                    unlockBtn.innerHTML = `<span>Sync & Unlock</span> <i class="fa-solid fa-arrow-right text-xs"></i>`;
+                console.error("Cloud connection failed. Initializing offline browser storage...", err);
+                showNotification("Connecting offline... Vault initialized locally.", "info");
+                
+                appState.userProfileId = customId;
+                appState.storageMode = 'local';
+                
+                // Load offline local storage content
+                loadLocalData(customId);
+                
+                appState.authenticated = true;
+                document.getElementById("auth-wall").classList.add("hidden");
+                document.getElementById("dashboard-panel").classList.remove("hidden");
+                document.getElementById("logout-btn").classList.remove("hidden");
+                
+                if (badge) {
+                    badge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20";
+                    badge.innerHTML = `<span class="h-1.5 w-1.5 rounded-full bg-amber-400"></span> Local-Only Mode`;
                 }
             }
         }
 
-        // Complete transition and listen to workspace streams
         async function completeLoginAndBind() {
             const db = appState.firebaseDB;
             const badge = document.getElementById("db-status-badge");
@@ -730,72 +758,183 @@
                 badge.innerHTML = `<span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span> 👤 ${appState.userProfileId} | Synced`;
             }
 
-            // Sync settings salary and bind collections real-time
-            await ensureSalaryInitialized(db, appState.userProfileId);
-            bindFirestoreRealtimeListeners(db, appState.userProfileId);
+            if (appState.storageMode !== 'local') {
+                bindFirestoreRealtimeListeners(db, appState.userProfileId);
+            }
 
-            // Interface Transitions
             appState.authenticated = true;
             document.getElementById("auth-wall").classList.add("hidden");
             document.getElementById("dashboard-panel").classList.remove("hidden");
             document.getElementById("logout-btn").classList.remove("hidden");
-            showNotification(`Connected to Cloud Vault: "${appState.userProfileId}"`);
+            showNotification(`Connected to Vault: "${appState.userProfileId}"`);
         }
 
-        // Verification check to initialize default configurations inside the user profile space
-        async function ensureSalaryInitialized(db, profileId) {
-            const appId = typeof __app_id !== 'undefined' ? __app_id : 'commitment-tracker-d78a4';
-            const settingsDocRef = doc(db, 'artifacts', appId, 'users', profileId, 'settings', 'salary');
-            const salarySnap = await getDoc(settingsDocRef);
-            
-            if (!salarySnap.exists()) {
-                await setDoc(settingsDocRef, { salary: 6500.00 });
-                appState.salary = 6500.00;
-            } else {
-                appState.salary = parseFloat(salarySnap.data().salary) || 6500.00;
-            }
-        }
-
-        // Realtime Firestore Sync Engine (Rule 1, Rule 2, Rule 3 compliant)
         function bindFirestoreRealtimeListeners(db, profileId) {
             const appId = typeof __app_id !== 'undefined' ? __app_id : 'commitment-tracker-d78a4';
             
-            // Track base salary changes for active custom workspace
-            const settingsDocRef = doc(db, 'artifacts', appId, 'users', profileId, 'settings', 'salary');
-            onSnapshot(settingsDocRef, (docSnap) => {
+            // Sync salary dynamically from the specific vault metadata document
+            const vaultDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'vaults', profileId);
+            onSnapshot(vaultDocRef, (docSnap) => {
                 if (docSnap.exists()) {
                     appState.salary = parseFloat(docSnap.data().salary) || 6500.00;
                     renderApp();
                 }
             }, (error) => {
-                console.error("Salary sync exception:", error);
+                console.error("Salary sync issue:", error);
             });
 
-            // Sync commitments for active custom workspace
-            const commitmentsRef = collection(db, 'artifacts', appId, 'users', profileId, 'commitments');
+            // Rule 2 In-Memory Filtering for commitments
+            const commitmentsRef = collection(db, 'artifacts', appId, 'public', 'data', 'commitments');
             onSnapshot(commitmentsRef, (snapshot) => {
                 const loaded = [];
                 snapshot.forEach(doc => {
-                    loaded.push({ id: doc.id, ...doc.data() });
+                    const data = doc.data();
+                    if (data.vaultId === profileId) {
+                        loaded.push({ id: doc.id, ...data });
+                    }
                 });
                 appState.commitments = loaded;
                 renderApp();
             }, (error) => {
-                console.error("Commitment sync exception:", error);
+                console.error("Commitment sync issue:", error);
             });
 
-            // Sync savings logs for active custom workspace
-            const savingsRef = collection(db, 'artifacts', appId, 'users', profileId, 'savings');
+            // Rule 2 In-Memory Filtering for savings records
+            const savingsRef = collection(db, 'artifacts', appId, 'public', 'data', 'savings');
             onSnapshot(savingsRef, (snapshot) => {
                 const loaded = [];
                 snapshot.forEach(doc => {
-                    loaded.push({ id: doc.id, ...doc.data() });
+                    const data = doc.data();
+                    if (data.vaultId === profileId) {
+                        loaded.push({ id: doc.id, ...data });
+                    }
                 });
                 appState.savings = loaded;
                 renderApp();
             }, (error) => {
-                console.error("Savings sync exception:", error);
+                console.error("Savings sync issue:", error);
             });
+        }
+
+        // DB Wrappers dynamically route writes between LocalStorage and Cloud Firestore (Public Collaborative Paths)
+        async function dbAddCommitment(payload) {
+            if (appState.storageMode === 'local') {
+                payload.id = 'local_' + Date.now();
+                appState.commitments.push(payload);
+                saveLocalData();
+                renderApp();
+            } else {
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'commitment-tracker-d78a4';
+                const colRef = collection(appState.firebaseDB, 'artifacts', appId, 'public', 'data', 'commitments');
+                await addDoc(colRef, payload);
+            }
+        }
+
+        async function dbUpdateCommitment(id, updatedFields) {
+            if (appState.storageMode === 'local') {
+                const index = appState.commitments.findIndex(c => c.id === id);
+                if (index !== -1) {
+                    appState.commitments[index] = { ...appState.commitments[index], ...updatedFields };
+                    saveLocalData();
+                    renderApp();
+                }
+            } else {
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'commitment-tracker-d78a4';
+                const docRef = doc(appState.firebaseDB, 'artifacts', appId, 'public', 'data', 'commitments', id);
+                await updateDoc(docRef, updatedFields);
+            }
+        }
+
+        async function dbDeleteCommitment(id) {
+            if (appState.storageMode === 'local') {
+                appState.commitments = appState.commitments.filter(c => c.id !== id);
+                saveLocalData();
+                renderApp();
+            } else {
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'commitment-tracker-d78a4';
+                const docRef = doc(appState.firebaseDB, 'artifacts', appId, 'public', 'data', 'commitments', id);
+                await deleteDoc(docRef);
+            }
+        }
+
+        async function dbAddSavings(payload) {
+            if (appState.storageMode === 'local') {
+                payload.id = 'local_' + Date.now();
+                appState.savings.push(payload);
+                saveLocalData();
+                renderApp();
+            } else {
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'commitment-tracker-d78a4';
+                const colRef = collection(appState.firebaseDB, 'artifacts', appId, 'public', 'data', 'savings');
+                await addDoc(colRef, payload);
+            }
+        }
+
+        async function dbDeleteSavings(id) {
+            if (appState.storageMode === 'local') {
+                appState.savings = appState.savings.filter(s => s.id !== id);
+                saveLocalData();
+                renderApp();
+            } else {
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'commitment-tracker-d78a4';
+                const docRef = doc(appState.firebaseDB, 'artifacts', appId, 'public', 'data', 'savings', id);
+                await deleteDoc(docRef);
+            }
+        }
+
+        async function dbUpdateSalary(amt) {
+            if (appState.storageMode === 'local') {
+                appState.salary = amt;
+                saveLocalData();
+                renderApp();
+            } else {
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'commitment-tracker-d78a4';
+                const docRef = doc(appState.firebaseDB, 'artifacts', appId, 'public', 'data', 'vaults', appState.userProfileId);
+                await updateDoc(docRef, { salary: amt });
+            }
+        }
+
+        async function togglePaidStatus(id, currentStatus) {
+            try {
+                if (appState.storageMode === 'local') {
+                    const index = appState.commitments.findIndex(c => c.id === id);
+                    if (index !== -1) {
+                        appState.commitments[index].paid = !currentStatus;
+                        saveLocalData();
+                        renderApp();
+                    }
+                } else {
+                    const appId = typeof __app_id !== 'undefined' ? __app_id : 'commitment-tracker-d78a4';
+                    const docRef = doc(appState.firebaseDB, 'artifacts', appId, 'public', 'data', 'commitments', id);
+                    await updateDoc(docRef, { paid: !currentStatus });
+                }
+                showNotification(!currentStatus ? "Marked commitment as paid." : "Marked commitment as unpaid.");
+            } catch (err) {
+                console.error("Error toggling paid status:", err);
+                showNotification("Could not update status.", "error");
+            }
+        }
+
+        // Offline local storage mechanics
+        function saveLocalData() {
+            localStorage.setItem(`vault_salary_${appState.userProfileId}`, appState.salary);
+            localStorage.setItem(`vault_commitments_${appState.userProfileId}`, JSON.stringify(appState.commitments));
+            localStorage.setItem(`vault_savings_${appState.userProfileId}`, JSON.stringify(appState.savings));
+        }
+
+        function loadLocalData(customId) {
+            appState.salary = parseFloat(localStorage.getItem(`vault_salary_${customId}`)) || 6500.00;
+            try {
+                appState.commitments = JSON.parse(localStorage.getItem(`vault_commitments_${customId}`)) || [];
+            } catch (e) {
+                appState.commitments = [];
+            }
+            try {
+                appState.savings = JSON.parse(localStorage.getItem(`vault_savings_${customId}`)) || [];
+            } catch (e) {
+                appState.savings = [];
+            }
+            renderApp();
         }
 
         function switchMobileTab(tabName) {
@@ -830,7 +969,6 @@
         }
 
         function setupEventListeners() {
-            // Login connection handler
             const loginForm = document.getElementById("app-login-form");
             if (loginForm) {
                 loginForm.addEventListener("submit", (e) => {
@@ -845,12 +983,12 @@
                     if (customId && password) {
                         verifyVaultWorkspace(customId, password);
                     } else {
-                        showNotification("Please provide both workspace ID and Password.", "error");
+                        showNotification("Please provide both Vault ID and Password.", "error");
                     }
                 });
             }
 
-            // Navigation tabs on mobile viewports
+            // Mobile view tab buttons
             const navTabs = ['overview', 'directory', 'vault', 'actions'];
             navTabs.forEach(tab => {
                 const tabBtn = document.getElementById(`nav-tab-${tab}`);
@@ -859,21 +997,20 @@
                 }
             });
 
-            // Desktop Search and Filter inputs
+            // Desktop filter events
             const searchInputDesk = document.getElementById("search-input");
             if (searchInputDesk) searchInputDesk.addEventListener("input", renderApp);
 
             const filterCatDesk = document.getElementById("filter-category");
             if (filterCatDesk) filterCatDesk.addEventListener("change", renderApp);
 
-            // Mobile Search and Filter inputs
+            // Mobile filter events
             const searchInputMob = document.getElementById("search-input-mob");
             if (searchInputMob) searchInputMob.addEventListener("input", renderApp);
 
             const filterCatMob = document.getElementById("filter-category-mob");
             if (filterCatMob) filterCatMob.addEventListener("change", renderApp);
 
-            // Trigger buttons
             const mobRecBtn = document.getElementById("mobile-record-savings-btn");
             if (mobRecBtn) mobRecBtn.addEventListener("click", openSavingsModal);
 
@@ -883,38 +1020,25 @@
             const salEditBtn = document.getElementById("edit-salary-trigger-btn");
             if (salEditBtn) salEditBtn.addEventListener("click", triggerSalaryEdit);
 
-            // Close notifications
             const closeNotifBtn = document.getElementById("close-notification-btn");
             if (closeNotifBtn) closeNotifBtn.addEventListener("click", closeNotification);
 
-            // Modal cancel controls
-            const cancelEditBtn = document.getElementById("cancel-edit-modal-btn");
-            if (cancelEditBtn) cancelEditBtn.addEventListener("click", closeEditModal);
+            // Cancel/Close Modal controls
+            document.getElementById("cancel-edit-modal-btn").addEventListener("click", closeEditModal);
+            document.getElementById("close-edit-modal-btn").addEventListener("click", closeEditModal);
+            document.getElementById("cancel-savings-modal-btn").addEventListener("click", closeSavingsModal);
+            document.getElementById("close-savings-modal-btn").addEventListener("click", closeSavingsModal);
+            document.getElementById("cancel-salary-modal-btn").addEventListener("click", closeSalaryModal);
+            document.getElementById("close-salary-modal-btn").addEventListener("click", closeSalaryModal);
+            document.getElementById("cancel-delete-modal-btn").addEventListener("click", closeDeleteModal);
 
-            const closeEditBtn = document.getElementById("close-edit-modal-btn");
-            if (closeEditBtn) closeEditBtn.addEventListener("click", closeEditModal);
-
-            const cancelSavingsBtn = document.getElementById("cancel-savings-modal-btn");
-            if (cancelSavingsBtn) cancelSavingsBtn.addEventListener("click", closeSavingsModal);
-
-            const closeSavingsBtn = document.getElementById("close-savings-modal-btn");
-            if (closeSavingsBtn) closeSavingsBtn.addEventListener("click", closeSavingsModal);
-
-            const cancelSalaryBtn = document.getElementById("cancel-salary-modal-btn");
-            if (cancelSalaryBtn) cancelSalaryBtn.addEventListener("click", closeSalaryModal);
-
-            const closeSalaryBtn = document.getElementById("close-salary-modal-btn");
-            if (closeSalaryBtn) closeSalaryBtn.addEventListener("click", closeSalaryModal);
-
-            const cancelDelBtn = document.getElementById("cancel-delete-modal-btn");
-            if (cancelDelBtn) cancelDelBtn.addEventListener("click", closeDeleteModal);
-
-            // Lock session action
+            // Session lock-out handler
             const logoutBtn = document.getElementById("logout-btn");
             if (logoutBtn) {
                 logoutBtn.addEventListener("click", () => {
                     appState.authenticated = false;
                     appState.userProfileId = "";
+                    
                     document.getElementById("auth-wall").classList.remove("hidden");
                     document.getElementById("dashboard-panel").classList.add("hidden");
                     document.getElementById("logout-btn").classList.add("hidden");
@@ -938,7 +1062,7 @@
                 });
             }
 
-            // Forms submit configuration
+            // Forms submissions config
             const commitForm = document.getElementById("add-commitment-form");
             if (commitForm) {
                 commitForm.addEventListener("submit", (e) => handleAddCommitment(e, "form-category", "form-item", "form-amount"));
@@ -961,17 +1085,20 @@
 
                 if (!item || isNaN(amount)) return;
 
-                const payload = { category, item, amount, paid: false };
+                // Add Vault ID to the document payload for Rule 2 in-memory segment isolation
+                const payload = { 
+                    vaultId: appState.userProfileId,
+                    category, 
+                    item, 
+                    amount, 
+                    paid: false 
+                };
 
                 try {
-                    const appId = typeof __app_id !== 'undefined' ? __app_id : 'commitment-tracker-d78a4';
-                    // Sync directly inside active profile path workspace (Rule 1)
-                    const colRef = collection(appState.firebaseDB, 'artifacts', appId, 'users', appState.userProfileId, 'commitments');
-                    await addDoc(colRef, payload);
-                    
+                    await dbAddCommitment(payload);
                     if (itemElem) itemElem.value = "";
                     if (amtElem) amtElem.value = "";
-                    showNotification(`Saved "${item}" to cloud DB.`);
+                    showNotification(`Saved "${item}" successfully.`);
                     
                     if (window.innerWidth < 1024) {
                         switchMobileTab('overview');
@@ -998,9 +1125,7 @@
                     if (!item || isNaN(amount)) return;
 
                     try {
-                        const appId = typeof __app_id !== 'undefined' ? __app_id : 'commitment-tracker-d78a4';
-                        const docRef = doc(appState.firebaseDB, 'artifacts', appId, 'users', appState.userProfileId, 'commitments', id);
-                        await updateDoc(docRef, { category, item, amount });
+                        await dbUpdateCommitment(id, { category, item, amount });
                         closeEditModal();
                         showNotification("Commitment revised.");
                     } catch (err) {
@@ -1023,13 +1148,15 @@
 
                     if (!month || isNaN(amount)) return;
 
-                    const payload = { month, note, amount };
+                    const payload = { 
+                        vaultId: appState.userProfileId,
+                        month, 
+                        note, 
+                        amount 
+                    };
 
                     try {
-                        const appId = typeof __app_id !== 'undefined' ? __app_id : 'commitment-tracker-d78a4';
-                        const colRef = collection(appState.firebaseDB, 'artifacts', appId, 'users', appState.userProfileId, 'savings');
-                        await addDoc(colRef, payload);
-                        
+                        await dbAddSavings(payload);
                         if (monthVal) monthVal.value = "";
                         if (noteVal) noteVal.value = "";
                         if (amtVal) amtVal.value = "";
@@ -1054,9 +1181,7 @@
                     if (isNaN(amt) || amt <= 0) return;
 
                     try {
-                        const appId = typeof __app_id !== 'undefined' ? __app_id : 'commitment-tracker-d78a4';
-                        const docRef = doc(appState.firebaseDB, 'artifacts', appId, 'users', appState.userProfileId, 'settings', 'salary');
-                        await setDoc(docRef, { salary: amt });
+                        await dbUpdateSalary(amt);
                         closeSalaryModal();
                         showNotification("Base salary updated.");
                     } catch (err) {
@@ -1071,7 +1196,6 @@
             }
         }
 
-        // Render application interface
         function renderApp() {
             const totalCommitments = appState.commitments.reduce((sum, item) => sum + Number(item.amount), 0);
             const paidCommitments = appState.commitments.filter(c => c.paid);
@@ -1080,12 +1204,12 @@
             const paidCount = paidCommitments.length;
             const totalCount = appState.commitments.length;
             
-            // Local JS memory sorting of dates (Rule 2 Compliant)
+            // local memory JS sorting config
             const sortedSavings = [...appState.savings].sort((a,b) => b.month.localeCompare(a.month));
             const latestSavingsAmount = sortedSavings.length > 0 ? Number(sortedSavings[0].amount) : 0;
             const disposableIncome = appState.salary - totalCommitments - latestSavingsAmount;
 
-            // Update DOM metrics
+            // DOM Metrics Updates
             const elements = {
                 salary: document.getElementById("salary-val-display"),
                 commit: document.getElementById("commit-val-display"),
@@ -1118,7 +1242,7 @@
             if (elements.commitPct) elements.commitPct.innerText = `${commitPctVal}% unpaid`;
             if (elements.savingsPct) elements.savingsPct.innerText = `${savePctVal}%`;
 
-            // Commitments Search Desktop Filter
+            // Commitments Directory Desktop table render
             const searchInput = document.getElementById("search-input");
             const searchQuery = searchInput ? searchInput.value.toLowerCase() : "";
 
@@ -1175,7 +1299,7 @@
                 }
             }
 
-            // Commitments Search Mobile Filter
+            // Commitments Directory Mobile render
             const searchInputMob = document.getElementById("search-input-mob");
             const mobSearchQuery = searchInputMob ? searchInputMob.value.toLowerCase() : "";
 
@@ -1240,7 +1364,7 @@
                 }
             }
 
-            // Desktop Savings render
+            // Desktop Savings history table render
             const savingsTbody = document.getElementById("savings-tbody");
             if (savingsTbody) {
                 savingsTbody.innerHTML = "";
@@ -1267,7 +1391,7 @@
                 }
             }
 
-            // Mobile Savings render
+            // Mobile Savings history list render
             const savingsMobContainer = document.getElementById("savings-mobile-list");
             if (savingsMobContainer) {
                 savingsMobContainer.innerHTML = "";
@@ -1405,6 +1529,7 @@
             if (modal) modal.classList.remove("hidden");
         }
 
+        // Custom Delete Triggers
         function triggerDelete(id, item) {
             deleteTarget = { type: 'commitment', id, label: item };
             const msg = document.getElementById("delete-modal-msg");
@@ -1423,18 +1548,6 @@
             if (modal) modal.classList.remove("hidden");
         }
 
-        async function togglePaidStatus(id, currentStatus) {
-            try {
-                const appId = typeof __app_id !== 'undefined' ? __app_id : 'commitment-tracker-d78a4';
-                const docRef = doc(appState.firebaseDB, 'artifacts', appId, 'users', appState.userProfileId, 'commitments', id);
-                await updateDoc(docRef, { paid: !currentStatus });
-                showNotification(!currentStatus ? "Marked commitment as paid." : "Marked commitment as unpaid.");
-            } catch (err) {
-                console.error("Error toggling paid status:", err);
-                showNotification("Could not update status.", "error");
-            }
-        }
-
         function closeDeleteModal() {
             const modal = document.getElementById("delete-confirm-modal");
             if (modal) modal.classList.add("hidden");
@@ -1445,14 +1558,11 @@
             if (!type || !id) return;
 
             try {
-                const appId = typeof __app_id !== 'undefined' ? __app_id : 'commitment-tracker-d78a4';
                 if (type === 'commitment') {
-                    const docRef = doc(appState.firebaseDB, 'artifacts', appId, 'users', appState.userProfileId, 'commitments', id);
-                    await deleteDoc(docRef);
+                    await dbDeleteCommitment(id);
                     showNotification(`Removed "${label}" successfully.`);
                 } else if (type === 'savings') {
-                    const docRef = doc(appState.firebaseDB, 'artifacts', appId, 'users', appState.userProfileId, 'savings', id);
-                    await deleteDoc(docRef);
+                    await dbDeleteSavings(id);
                     showNotification("Savings entry deleted.");
                 }
             } catch (err) {
@@ -1528,6 +1638,8 @@
             if (bar) {
                 if (type === "error") {
                     bar.className = "flex items-center justify-between p-3.5 bg-rose-500/10 border border-rose-500/20 text-rose-300 rounded-xl text-xs transition-all";
+                } else if (type === "info") {
+                    bar.className = "flex items-center justify-between p-3.5 bg-blue-500/10 border border-blue-500/20 text-blue-300 rounded-xl text-xs transition-all";
                 } else {
                     bar.className = "flex items-center justify-between p-3.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 rounded-xl text-xs transition-all";
                 }
