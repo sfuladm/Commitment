@@ -144,7 +144,7 @@
                 <div class="bg-slate-900/60 border border-slate-800/40 rounded-2xl p-4 shadow-sm">
                     <div class="flex items-center justify-between">
                         <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Remaining Outflow</span>
-                        <span id="commit-percentage" class="text-[8px] font-bold text-rose-455">0% unpaid</span>
+                        <span id="commit-percentage" class="text-[8px] font-bold text-rose-400">0% unpaid</span>
                     </div>
                     <div class="mt-1 flex items-baseline gap-0.5">
                         <span class="text-slate-400 text-xs font-semibold">RM</span>
@@ -463,14 +463,6 @@
         </button>
     </nav>
 
-    <!-- FOOTER (ONLY visible on Desktop Viewport) -->
-    <footer class="hidden lg:block bg-slate-950 border-t border-slate-900/60 py-4 px-6 text-center text-xs text-slate-500">
-        <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <span>&copy; 2026 Commitment Tracker Portfolio App. All rights reserved.</span>
-            <span class="flex items-center gap-1.5"><i class="fa-solid fa-cloud text-emerald-500/80"></i> 100% Secure Google Cloud Firestore Real-time Synced.</span>
-        </div>
-    </footer>
-
     <!-- MODAL: Edit Commitment Entry -->
     <div id="edit-commitment-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full overflow-hidden shadow-2xl">
@@ -583,19 +575,9 @@
     <!-- CORE APPLICATION LOGIC & DATABASE ENGINE -->
     <!-- Consolidating all dependencies inside type="module" to prevent DOM race condition errors -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, collection, query, onSnapshot, addDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // STRICT FIREBASE CONFIGURATION
-        const firebaseConfig = {
-            apiKey: "AIzaSyB3HV2fLQDqAZQoAMq_Ava2hjPNAmqJ23s",
-            authDomain: "commitment-tracker-d78a4.firebaseapp.com",
-            projectId: "commitment-tracker-d78a4",
-            storageBucket: "commitment-tracker-d78a4.firebasestorage.app",
-            messagingSenderId: "251775961082",
-            appId: "1:251775961082:web:14d22c0e944557a5e30643"
-        };
 
         let appState = {
             authenticated: false,
@@ -643,40 +625,47 @@
             await runBackgroundAuth();
         });
 
-        // Background authentication initialization
+        let initPromise = null;
         async function runBackgroundAuth() {
-            const badge = document.getElementById("db-status-badge");
-            try {
-                const app = initializeApp(firebaseConfig);
-                const auth = getAuth(app);
-                const db = getFirestore(app);
-                
-                appState.firebaseApp = app;
-                appState.firebaseAuth = auth;
-                appState.firebaseDB = db;
+            if (initPromise) return initPromise;
+            
+            initPromise = (async () => {
+                const badge = document.getElementById("db-status-badge");
+                try {
+                    // Prevent duplicate app runtime errors by using getApps() safeguard
+                    const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+                    const auth = getAuth(app);
+                    const db = getFirestore(app);
+                    
+                    appState.firebaseApp = app;
+                    appState.firebaseAuth = auth;
+                    appState.firebaseDB = db;
 
-                // Priority Custom Token/Anonymous Session to authenticate
-                let tempUser;
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    const credential = await signInWithCustomToken(auth, __initial_auth_token);
-                    tempUser = credential.user;
-                } else {
-                    const credential = await signInAnonymously(auth);
-                    tempUser = credential.user;
-                }
-                appState.user = tempUser;
+                    // Priority Custom Token/Anonymous Session to authenticate
+                    let tempUser;
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        const credential = await signInWithCustomToken(auth, __initial_auth_token);
+                        tempUser = credential.user;
+                    } else {
+                        const credential = await signInAnonymously(auth);
+                        tempUser = credential.user;
+                    }
+                    appState.user = tempUser;
 
-                if (badge) {
-                    badge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20";
-                    badge.innerHTML = `<span class="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse"></span> Vault Locked`;
+                    if (badge) {
+                        badge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20";
+                        badge.innerHTML = `<span class="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse"></span> Vault Locked`;
+                    }
+                } catch (err) {
+                    console.error("Background auth load exception:", err);
+                    if (badge) {
+                        badge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20";
+                        badge.innerHTML = `<span class="h-1.5 w-1.5 rounded-full bg-rose-400"></span> Offline Sync Mode`;
+                    }
                 }
-            } catch (err) {
-                console.error("Background auth load exception:", err);
-                if (badge) {
-                    badge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20";
-                    badge.innerHTML = `<span class="h-1.5 w-1.5 rounded-full bg-rose-400"></span> Offline Sync Mode`;
-                }
-            }
+            })();
+            
+            return initPromise;
         }
 
         // Database authentication connection and credential verification
@@ -691,9 +680,7 @@
 
             try {
                 // Confirm background auth completed, fallback load if missing
-                if (!appState.firebaseDB || !appState.user) {
-                    await runBackgroundAuth();
-                }
+                await runBackgroundAuth();
 
                 const db = appState.firebaseDB;
                 const appId = typeof __app_id !== 'undefined' ? __app_id : 'commitment-tracker-d78a4';
