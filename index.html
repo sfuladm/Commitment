@@ -68,7 +68,7 @@
                     <span class="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse"></span>
                     Initializing
                 </span>
-                <button id="logout-btn" class="hidden bg-rose-500/10 hover:bg-rose-500 hover:text-white text-rose-400 transition p-2 rounded-xl text-xs border border-rose-500/20 h-9 w-9" title="Logout">
+                <button id="logout-btn" class="hidden bg-rose-500/10 hover:bg-rose-500 hover:text-white text-rose-400 transition p-2 rounded-xl text-xs border border-rose-500/20 h-9 w-9" title="Lock Vault & Sign Out">
                     <i class="fa-solid fa-right-from-bracket"></i>
                 </button>
             </div>
@@ -78,31 +78,40 @@
     <!-- Main Dynamic Application Container -->
     <main class="flex-grow max-w-7xl w-full mx-auto p-3 sm:p-6 lg:p-8 space-y-4">
 
-        <!-- Initial Simple Password Protection / Login screen -->
+        <!-- Multi-User Custom ID & Password Login Screen -->
         <div id="auth-wall" class="max-w-md mx-auto my-8 bg-slate-900/60 border border-slate-800/60 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-md">
             <div class="text-center space-y-3 mb-6">
                 <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-emerald-500/10 text-emerald-400 mb-1 border border-emerald-500/20">
                     <i class="fa-solid fa-shield-halved text-2xl"></i>
                 </div>
-                <h2 class="text-lg font-bold text-white">Unlock Database</h2>
-                <p class="text-xs text-slate-400 max-w-[280px] mx-auto">Connecting directly to Cloud Firestore. Enter your access pin to continue.</p>
+                <h2 class="text-lg font-bold text-white">Unlock Vault Database</h2>
+                <p class="text-xs text-slate-400 max-w-[280px] mx-auto">Sync or register your dashboard across devices instantly using a unique Vault ID.</p>
             </div>
             
             <form id="app-login-form" class="space-y-4">
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Access PIN / Password</label>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Vault ID (Case-sensitive)</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-500">
+                            <i class="fa-solid fa-user text-sm"></i>
+                        </span>
+                        <input type="text" id="app-id-input" placeholder="e.g., family-vault" required class="w-full pl-10 pr-4 py-3 h-12 bg-slate-950 border border-slate-800 rounded-xl focus:outline-none focus:ring-1 focus:ring-emerald-500 text-slate-100 transition placeholder-slate-700 text-sm font-bold">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Vault Password</label>
                     <div class="relative">
                         <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-500">
                             <i class="fa-solid fa-lock text-sm"></i>
                         </span>
-                        <input type="password" id="app-pass-input" placeholder="••••" class="w-full pl-10 pr-4 py-3 h-12 bg-slate-950 border border-slate-800 rounded-xl focus:outline-none focus:ring-1 focus:ring-emerald-500 text-slate-100 transition placeholder-slate-700 text-center tracking-widest text-lg font-bold">
+                        <input type="password" id="app-pass-input" placeholder="••••••••" required class="w-full pl-10 pr-4 py-3 h-12 bg-slate-950 border border-slate-800 rounded-xl focus:outline-none focus:ring-1 focus:ring-emerald-500 text-slate-100 transition placeholder-slate-700 text-sm font-bold">
                     </div>
                 </div>
                 <button type="submit" id="unlock-btn" class="w-full bg-emerald-500 active:scale-[0.98] hover:bg-emerald-400 text-slate-950 font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-emerald-500/20 transition duration-150 text-sm flex items-center justify-center gap-2">
-                    <span>Unlock & Connect</span> <i class="fa-solid fa-arrow-right text-xs"></i>
+                    <span>Sync & Unlock</span> <i class="fa-solid fa-arrow-right text-xs"></i>
                 </button>
-                <div class="text-center text-[11px] text-slate-500 mt-4">
-                    Default PIN: <code class="bg-slate-950 px-2 py-0.5 rounded text-emerald-400 font-mono font-bold">1234</code>
+                <div class="text-center text-[10px] text-slate-500 mt-4 leading-relaxed bg-slate-950/40 p-2.5 rounded-xl border border-slate-900">
+                    <span class="text-emerald-400 font-semibold">New to Vault?</span> Just enter any unique ID and password. It will register automatically!
                 </div>
             </form>
         </div>
@@ -135,7 +144,7 @@
                 <div class="bg-slate-900/60 border border-slate-800/40 rounded-2xl p-4 shadow-sm">
                     <div class="flex items-center justify-between">
                         <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Remaining Outflow</span>
-                        <span id="commit-percentage" class="text-[8px] font-bold text-rose-450">0% unpaid</span>
+                        <span id="commit-percentage" class="text-[8px] font-bold text-rose-455">0% unpaid</span>
                     </div>
                     <div class="mt-1 flex items-baseline gap-0.5">
                         <span class="text-slate-400 text-xs font-semibold">RM</span>
@@ -596,7 +605,8 @@
             firebaseApp: null,
             firebaseDB: null,
             firebaseAuth: null,
-            user: null,
+            user: null, // Holds anonymous firebase auth session user
+            userProfileId: "", // Custom sync ID entered by user at login
             currentMobileTab: "overview"
         };
 
@@ -624,28 +634,19 @@
         window.togglePaidStatus = togglePaidStatus;
 
         // Initialize App on load
-        window.addEventListener('DOMContentLoaded', () => {
+        window.addEventListener('DOMContentLoaded', async () => {
             setupEventListeners();
             initCharts();
             switchMobileTab('overview');
+            
+            // RULE 3: Perform background database connection instantly so we are authenticated before any form queries run.
+            await runBackgroundAuth();
         });
 
-        // Safe Authentication & Listener Binding (Follows Rules 1, 2, 3)
-        async function initializeDatabaseConnection() {
+        // Background authentication initialization
+        async function runBackgroundAuth() {
             const badge = document.getElementById("db-status-badge");
-            const unlockBtn = document.getElementById("unlock-btn");
-            
-            if (unlockBtn) {
-                unlockBtn.disabled = true;
-                unlockBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Connecting Cloud...`;
-            }
-
             try {
-                if (badge) {
-                    badge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20";
-                    badge.innerHTML = `<span class="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse"></span> Connecting Cloud`;
-                }
-
                 const app = initializeApp(firebaseConfig);
                 const auth = getAuth(app);
                 const db = getFirestore(app);
@@ -654,51 +655,110 @@
                 appState.firebaseAuth = auth;
                 appState.firebaseDB = db;
 
-                // RULE 3: Auth Before Queries (Prioritize Custom Token and wait for resolution)
-                let user;
+                // Priority Custom Token/Anonymous Session to authenticate
+                let tempUser;
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     const credential = await signInWithCustomToken(auth, __initial_auth_token);
-                    user = credential.user;
+                    tempUser = credential.user;
                 } else {
                     const credential = await signInAnonymously(auth);
-                    user = credential.user;
+                    tempUser = credential.user;
                 }
-                appState.user = user;
+                appState.user = tempUser;
 
                 if (badge) {
-                    badge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
-                    badge.innerHTML = `<span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span> Online Synced`;
+                    badge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20";
+                    badge.innerHTML = `<span class="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse"></span> Vault Locked`;
                 }
-
-                // Verify configurations and start state listeners
-                await ensureSalaryInitialized(db, user.uid);
-                bindFirestoreRealtimeListeners(db, user.uid);
-
-                // Open Authenticated view
-                appState.authenticated = true;
-                document.getElementById("auth-wall").classList.add("hidden");
-                document.getElementById("dashboard-panel").classList.remove("hidden");
-                document.getElementById("logout-btn").classList.remove("hidden");
-                showNotification("Secure cloud database connected successfully.");
-
             } catch (err) {
-                console.error("Firebase cloud error:", err);
-                showNotification("Could not sync with Firebase cloud. Check configuration.", "error");
+                console.error("Background auth load exception:", err);
                 if (badge) {
                     badge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20";
-                    badge.innerHTML = `<span class="h-1.5 w-1.5 rounded-full bg-rose-400"></span> Connection Error`;
-                }
-                if (unlockBtn) {
-                    unlockBtn.disabled = false;
-                    unlockBtn.innerHTML = `<span>Unlock & Connect</span> <i class="fa-solid fa-arrow-right text-xs"></i>`;
+                    badge.innerHTML = `<span class="h-1.5 w-1.5 rounded-full bg-rose-400"></span> Offline Sync Mode`;
                 }
             }
         }
 
-        // Rule 1 compliant verification for base setting config
-        async function ensureSalaryInitialized(db, uid) {
+        // Database authentication connection and credential verification
+        async function verifyVaultWorkspace(customId, password) {
+            const badge = document.getElementById("db-status-badge");
+            const unlockBtn = document.getElementById("unlock-btn");
+            
+            if (unlockBtn) {
+                unlockBtn.disabled = true;
+                unlockBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Checking Database...`;
+            }
+
+            try {
+                // Confirm background auth completed, fallback load if missing
+                if (!appState.firebaseDB || !appState.user) {
+                    await runBackgroundAuth();
+                }
+
+                const db = appState.firebaseDB;
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'commitment-tracker-d78a4';
+                
+                // Rule 1: Point to user path config schema
+                const authDocRef = doc(db, 'artifacts', appId, 'users', customId, 'settings', 'auth');
+                const authSnap = await getDoc(authDocRef);
+
+                if (authSnap.exists()) {
+                    // Password comparison as normal info check
+                    const storedPassword = authSnap.data().password;
+                    if (storedPassword === password) {
+                        appState.userProfileId = customId;
+                        await completeLoginAndBind();
+                    } else {
+                        showNotification("Incorrect password for this Vault ID.", "error");
+                        if (unlockBtn) {
+                            unlockBtn.disabled = false;
+                            unlockBtn.innerHTML = `<span>Sync & Unlock</span> <i class="fa-solid fa-arrow-right text-xs"></i>`;
+                        }
+                    }
+                } else {
+                    // Autocreate the workspace profile securely with credentials provided
+                    await setDoc(authDocRef, { password: password });
+                    appState.userProfileId = customId;
+                    showNotification(`Registered new secure vault for "${customId}" successfully.`);
+                    await completeLoginAndBind();
+                }
+
+            } catch (err) {
+                console.error("Firestore unlock verification error:", err);
+                showNotification("Could not authenticate. Check network / workspace ID.", "error");
+                if (unlockBtn) {
+                    unlockBtn.disabled = false;
+                    unlockBtn.innerHTML = `<span>Sync & Unlock</span> <i class="fa-solid fa-arrow-right text-xs"></i>`;
+                }
+            }
+        }
+
+        // Complete transition and listen to workspace streams
+        async function completeLoginAndBind() {
+            const db = appState.firebaseDB;
+            const badge = document.getElementById("db-status-badge");
+
+            if (badge) {
+                badge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+                badge.innerHTML = `<span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span> 👤 ${appState.userProfileId} | Synced`;
+            }
+
+            // Sync settings salary and bind collections real-time
+            await ensureSalaryInitialized(db, appState.userProfileId);
+            bindFirestoreRealtimeListeners(db, appState.userProfileId);
+
+            // Interface Transitions
+            appState.authenticated = true;
+            document.getElementById("auth-wall").classList.add("hidden");
+            document.getElementById("dashboard-panel").classList.remove("hidden");
+            document.getElementById("logout-btn").classList.remove("hidden");
+            showNotification(`Connected to Cloud Vault: "${appState.userProfileId}"`);
+        }
+
+        // Verification check to initialize default configurations inside the user profile space
+        async function ensureSalaryInitialized(db, profileId) {
             const appId = typeof __app_id !== 'undefined' ? __app_id : 'commitment-tracker-d78a4';
-            const settingsDocRef = doc(db, 'artifacts', appId, 'users', uid, 'settings', 'salary');
+            const settingsDocRef = doc(db, 'artifacts', appId, 'users', profileId, 'settings', 'salary');
             const salarySnap = await getDoc(settingsDocRef);
             
             if (!salarySnap.exists()) {
@@ -710,11 +770,11 @@
         }
 
         // Realtime Firestore Sync Engine (Rule 1, Rule 2, Rule 3 compliant)
-        function bindFirestoreRealtimeListeners(db, uid) {
+        function bindFirestoreRealtimeListeners(db, profileId) {
             const appId = typeof __app_id !== 'undefined' ? __app_id : 'commitment-tracker-d78a4';
             
-            // Track base salary changes
-            const settingsDocRef = doc(db, 'artifacts', appId, 'users', uid, 'settings', 'salary');
+            // Track base salary changes for active custom workspace
+            const settingsDocRef = doc(db, 'artifacts', appId, 'users', profileId, 'settings', 'salary');
             onSnapshot(settingsDocRef, (docSnap) => {
                 if (docSnap.exists()) {
                     appState.salary = parseFloat(docSnap.data().salary) || 6500.00;
@@ -724,8 +784,8 @@
                 console.error("Salary sync exception:", error);
             });
 
-            // Sync Commitments
-            const commitmentsRef = collection(db, 'artifacts', appId, 'users', uid, 'commitments');
+            // Sync commitments for active custom workspace
+            const commitmentsRef = collection(db, 'artifacts', appId, 'users', profileId, 'commitments');
             onSnapshot(commitmentsRef, (snapshot) => {
                 const loaded = [];
                 snapshot.forEach(doc => {
@@ -737,8 +797,8 @@
                 console.error("Commitment sync exception:", error);
             });
 
-            // Sync Savings Logs
-            const savingsRef = collection(db, 'artifacts', appId, 'users', uid, 'savings');
+            // Sync savings logs for active custom workspace
+            const savingsRef = collection(db, 'artifacts', appId, 'users', profileId, 'savings');
             onSnapshot(savingsRef, (snapshot) => {
                 const loaded = [];
                 snapshot.forEach(doc => {
@@ -783,22 +843,27 @@
         }
 
         function setupEventListeners() {
-            // Unlocks UI, initializes database
+            // Login connection handler
             const loginForm = document.getElementById("app-login-form");
             if (loginForm) {
                 loginForm.addEventListener("submit", (e) => {
                     e.preventDefault();
-                    const pinInput = document.getElementById("app-pass-input");
-                    const pin = pinInput ? pinInput.value : "";
-                    if (pin === "1234" || pin === "admin") {
-                        initializeDatabaseConnection();
+                    
+                    const idInput = document.getElementById("app-id-input");
+                    const passInput = document.getElementById("app-pass-input");
+                    
+                    const customId = idInput ? idInput.value.trim() : "";
+                    const password = passInput ? passInput.value : "";
+                    
+                    if (customId && password) {
+                        verifyVaultWorkspace(customId, password);
                     } else {
-                        showNotification("Invalid Security Code.", "error");
+                        showNotification("Please provide both workspace ID and Password.", "error");
                     }
                 });
             }
 
-            // Navigation tabs on mobile
+            // Navigation tabs on mobile viewports
             const navTabs = ['overview', 'directory', 'vault', 'actions'];
             navTabs.forEach(tab => {
                 const tabBtn = document.getElementById(`nav-tab-${tab}`);
@@ -807,21 +872,21 @@
                 }
             });
 
-            // Desktop Search and Filter triggers
+            // Desktop Search and Filter inputs
             const searchInputDesk = document.getElementById("search-input");
             if (searchInputDesk) searchInputDesk.addEventListener("input", renderApp);
 
             const filterCatDesk = document.getElementById("filter-category");
             if (filterCatDesk) filterCatDesk.addEventListener("change", renderApp);
 
-            // Mobile Search and Filter triggers
+            // Mobile Search and Filter inputs
             const searchInputMob = document.getElementById("search-input-mob");
             if (searchInputMob) searchInputMob.addEventListener("input", renderApp);
 
             const filterCatMob = document.getElementById("filter-category-mob");
             if (filterCatMob) filterCatMob.addEventListener("change", renderApp);
 
-            // Record savings trigger buttons
+            // Trigger buttons
             const mobRecBtn = document.getElementById("mobile-record-savings-btn");
             if (mobRecBtn) mobRecBtn.addEventListener("click", openSavingsModal);
 
@@ -831,11 +896,11 @@
             const salEditBtn = document.getElementById("edit-salary-trigger-btn");
             if (salEditBtn) salEditBtn.addEventListener("click", triggerSalaryEdit);
 
-            // Close notification
+            // Close notifications
             const closeNotifBtn = document.getElementById("close-notification-btn");
             if (closeNotifBtn) closeNotifBtn.addEventListener("click", closeNotification);
 
-            // Close Modal bindings
+            // Modal cancel controls
             const cancelEditBtn = document.getElementById("cancel-edit-modal-btn");
             if (cancelEditBtn) cancelEditBtn.addEventListener("click", closeEditModal);
 
@@ -857,27 +922,36 @@
             const cancelDelBtn = document.getElementById("cancel-delete-modal-btn");
             if (cancelDelBtn) cancelDelBtn.addEventListener("click", closeDeleteModal);
 
-            // Closes session, wipes keys out of state
+            // Lock session action
             const logoutBtn = document.getElementById("logout-btn");
             if (logoutBtn) {
                 logoutBtn.addEventListener("click", () => {
                     appState.authenticated = false;
+                    appState.userProfileId = "";
                     document.getElementById("auth-wall").classList.remove("hidden");
                     document.getElementById("dashboard-panel").classList.add("hidden");
                     document.getElementById("logout-btn").classList.add("hidden");
                     
+                    const idInput = document.getElementById("app-id-input");
                     const pinInput = document.getElementById("app-pass-input");
+                    if (idInput) idInput.value = "";
                     if (pinInput) pinInput.value = "";
 
                     const unlockBtn = document.getElementById("unlock-btn");
                     if (unlockBtn) {
                         unlockBtn.disabled = false;
-                        unlockBtn.innerHTML = `<span>Unlock & Connect</span> <i class="fa-solid fa-arrow-right text-xs"></i>`;
+                        unlockBtn.innerHTML = `<span>Sync & Unlock</span> <i class="fa-solid fa-arrow-right text-xs"></i>`;
+                    }
+
+                    const badge = document.getElementById("db-status-badge");
+                    if (badge) {
+                        badge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20";
+                        badge.innerHTML = `<span class="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse"></span> Vault Locked`;
                     }
                 });
             }
 
-            // Forms Submit configurations
+            // Forms submit configuration
             const commitForm = document.getElementById("add-commitment-form");
             if (commitForm) {
                 commitForm.addEventListener("submit", (e) => handleAddCommitment(e, "form-category", "form-item", "form-amount"));
@@ -904,18 +978,19 @@
 
                 try {
                     const appId = typeof __app_id !== 'undefined' ? __app_id : 'commitment-tracker-d78a4';
-                    const colRef = collection(appState.firebaseDB, 'artifacts', appId, 'users', appState.user.uid, 'commitments');
+                    // Sync directly inside active profile path workspace (Rule 1)
+                    const colRef = collection(appState.firebaseDB, 'artifacts', appId, 'users', appState.userProfileId, 'commitments');
                     await addDoc(colRef, payload);
                     
                     if (itemElem) itemElem.value = "";
                     if (amtElem) amtElem.value = "";
-                    showNotification(`Saved "${item}" to database successfully.`);
+                    showNotification(`Saved "${item}" to cloud DB.`);
                     
                     if (window.innerWidth < 1024) {
                         switchMobileTab('overview');
                     }
                 } catch (err) {
-                    showNotification("Failed to save entry.", "error");
+                    showNotification("Failed to save commitment.", "error");
                 }
             }
 
@@ -937,7 +1012,7 @@
 
                     try {
                         const appId = typeof __app_id !== 'undefined' ? __app_id : 'commitment-tracker-d78a4';
-                        const docRef = doc(appState.firebaseDB, 'artifacts', appId, 'users', appState.user.uid, 'commitments', id);
+                        const docRef = doc(appState.firebaseDB, 'artifacts', appId, 'users', appState.userProfileId, 'commitments', id);
                         await updateDoc(docRef, { category, item, amount });
                         closeEditModal();
                         showNotification("Commitment revised.");
@@ -965,7 +1040,7 @@
 
                     try {
                         const appId = typeof __app_id !== 'undefined' ? __app_id : 'commitment-tracker-d78a4';
-                        const colRef = collection(appState.firebaseDB, 'artifacts', appId, 'users', appState.user.uid, 'savings');
+                        const colRef = collection(appState.firebaseDB, 'artifacts', appId, 'users', appState.userProfileId, 'savings');
                         await addDoc(colRef, payload);
                         
                         if (monthVal) monthVal.value = "";
@@ -993,7 +1068,7 @@
 
                     try {
                         const appId = typeof __app_id !== 'undefined' ? __app_id : 'commitment-tracker-d78a4';
-                        const docRef = doc(appState.firebaseDB, 'artifacts', appId, 'users', appState.user.uid, 'settings', 'salary');
+                        const docRef = doc(appState.firebaseDB, 'artifacts', appId, 'users', appState.userProfileId, 'settings', 'salary');
                         await setDoc(docRef, { salary: amt });
                         closeSalaryModal();
                         showNotification("Base salary updated.");
@@ -1018,6 +1093,7 @@
             const paidCount = paidCommitments.length;
             const totalCount = appState.commitments.length;
             
+            // Local JS memory sorting of dates (Rule 2 Compliant)
             const sortedSavings = [...appState.savings].sort((a,b) => b.month.localeCompare(a.month));
             const latestSavingsAmount = sortedSavings.length > 0 ? Number(sortedSavings[0].amount) : 0;
             const disposableIncome = appState.salary - totalCommitments - latestSavingsAmount;
@@ -1094,7 +1170,7 @@
                                     ${item.category}
                                 </span>
                             </td>
-                            <td class="px-5 py-3.5 text-slate-300 font-semibold ${isPaid ? 'line-through text-slate-500' : ''}">${escapeHtml(item.item)}</td>
+                            <td class="px-5 py-3.5 text-slate-300 font-semibold ${isPaid ? 'line-through text-slate-500 font-medium' : ''}">${escapeHtml(item.item)}</td>
                             <td class="px-5 py-3.5 text-right font-mono text-slate-200 font-extrabold">RM ${formatCurrency(item.amount)}</td>
                             <td class="px-5 py-3.5 text-center whitespace-nowrap">
                                 <div class="flex items-center justify-center gap-1.5">
@@ -1363,9 +1439,9 @@
         async function togglePaidStatus(id, currentStatus) {
             try {
                 const appId = typeof __app_id !== 'undefined' ? __app_id : 'commitment-tracker-d78a4';
-                const docRef = doc(appState.firebaseDB, 'artifacts', appId, 'users', appState.user.uid, 'commitments', id);
+                const docRef = doc(appState.firebaseDB, 'artifacts', appId, 'users', appState.userProfileId, 'commitments', id);
                 await updateDoc(docRef, { paid: !currentStatus });
-                showNotification(!currentStatus ? "Marked as paid." : "Marked as unpaid.");
+                showNotification(!currentStatus ? "Marked commitment as paid." : "Marked commitment as unpaid.");
             } catch (err) {
                 console.error("Error toggling paid status:", err);
                 showNotification("Could not update status.", "error");
@@ -1384,11 +1460,11 @@
             try {
                 const appId = typeof __app_id !== 'undefined' ? __app_id : 'commitment-tracker-d78a4';
                 if (type === 'commitment') {
-                    const docRef = doc(appState.firebaseDB, 'artifacts', appId, 'users', appState.user.uid, 'commitments', id);
+                    const docRef = doc(appState.firebaseDB, 'artifacts', appId, 'users', appState.userProfileId, 'commitments', id);
                     await deleteDoc(docRef);
                     showNotification(`Removed "${label}" successfully.`);
                 } else if (type === 'savings') {
-                    const docRef = doc(appState.firebaseDB, 'artifacts', appId, 'users', appState.user.uid, 'savings', id);
+                    const docRef = doc(appState.firebaseDB, 'artifacts', appId, 'users', appState.userProfileId, 'savings', id);
                     await deleteDoc(docRef);
                     showNotification("Savings entry deleted.");
                 }
