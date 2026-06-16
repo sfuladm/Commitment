@@ -134,8 +134,8 @@
                 <!-- Outflow -->
                 <div class="bg-slate-900/60 border border-slate-800/40 rounded-2xl p-4 shadow-sm">
                     <div class="flex items-center justify-between">
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Outflow</span>
-                        <span id="commit-percentage" class="text-[8px] font-bold text-rose-400">0%</span>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Remaining Outflow</span>
+                        <span id="commit-percentage" class="text-[8px] font-bold text-rose-450">0% unpaid</span>
                     </div>
                     <div class="mt-1 flex items-baseline gap-0.5">
                         <span class="text-slate-400 text-xs font-semibold">RM</span>
@@ -1014,6 +1014,7 @@
             const totalCommitments = appState.commitments.reduce((sum, item) => sum + Number(item.amount), 0);
             const paidCommitments = appState.commitments.filter(c => c.paid);
             const totalPaidAmount = paidCommitments.reduce((sum, item) => sum + Number(item.amount), 0);
+            const unpaidCommitments = totalCommitments - totalPaidAmount;
             const paidCount = paidCommitments.length;
             const totalCount = appState.commitments.length;
             
@@ -1034,7 +1035,7 @@
             };
 
             if (elements.salary) elements.salary.innerText = formatCurrency(appState.salary);
-            if (elements.commit) elements.commit.innerText = formatCurrency(totalCommitments);
+            if (elements.commit) elements.commit.innerText = formatCurrency(unpaidCommitments);
             if (elements.savings) elements.savings.innerText = formatCurrency(latestSavingsAmount);
             if (elements.paidDisplay) elements.paidDisplay.innerText = "RM " + formatCurrency(totalPaidAmount);
             if (elements.paidRatio) elements.paidRatio.innerText = `${paidCount}/${totalCount} paid`;
@@ -1048,10 +1049,10 @@
                 }
             }
 
-            const commitPctVal = appState.salary > 0 ? ((totalCommitments / appState.salary) * 100).toFixed(1) : 0;
+            const commitPctVal = appState.salary > 0 ? ((unpaidCommitments / appState.salary) * 100).toFixed(1) : 0;
             const savePctVal = appState.salary > 0 ? ((latestSavingsAmount / appState.salary) * 100).toFixed(1) : 0;
 
-            if (elements.commitPct) elements.commitPct.innerText = `${commitPctVal}%`;
+            if (elements.commitPct) elements.commitPct.innerText = `${commitPctVal}% unpaid`;
             if (elements.savingsPct) elements.savingsPct.innerText = `${savePctVal}%`;
 
             // Commitments Search Desktop Filter
